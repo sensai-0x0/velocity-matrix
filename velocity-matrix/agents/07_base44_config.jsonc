@@ -1,0 +1,37 @@
+# 07_base44_config.jsonc
+
+## Purpose
+This is the root configuration file for the Base44 platform (`base44/config.jsonc`). It defines the project's metadata and explicitly maps the directory structure so the Base44 CLI knows where to find the entities, functions, and connector manifests during deployment. 
+
+## Agent Implementation Instructions
+
+To the agent executing this blueprint, create the `base44/config.jsonc` file exactly as written below. This is the core file the `base44-cli` looks for to recognize the workspace as a valid Base44 backend project.
+
+### Configuration Rules
+- **Formatting:** Must be valid JSONC (JSON with comments).
+- **Paths:** Keep all directory paths relative to the `base44/` root folder.
+- **Deployment:** The `site` properties dictate how the frontend matrix UI is built and deployed when executing `npx base44 deploy`.
+
+## Code Artifact
+
+```jsonc
+// base44/config.jsonc
+{
+  "name": "velocity-matrix",
+  "description": "Autonomous AI Co-Founder Grid for high-velocity solo hackathons.",
+  
+  // Backend Resource Directories
+  "entitiesDir": "./entities",
+  "functionsDir": "./functions",
+  "connectorsDir": "./connectors",
+  "authDir": "./auth",
+  "agentsDir": "./agents",
+
+  // Frontend Matrix UI Hosting Settings
+  "site": {
+    "installCommand": "npm install",
+    "buildCommand": "npm run build",
+    "serveCommand": "npm run dev",
+    "outputDirectory": "../dist" // Assumes Vite/React frontend built outside the base44 folder
+  }
+}

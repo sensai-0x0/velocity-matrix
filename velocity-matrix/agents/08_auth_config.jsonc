@@ -1,0 +1,12 @@
+// Zone 1 OAuth identity settings — synced to base44/auth/config.jsonc.
+// GitHub identity uses Base44 Enterprise SSO (auth_design.md Solo-Cell model).
+// Built-in social providers below; SSO is configured in the Base44 dashboard.
+{
+  "enableUsernamePassword": true,
+  "enableGoogleLogin": false,
+  "enableMicrosoftLogin": false,
+  "enableFacebookLogin": false,
+  "enableAppleLogin": false,
+  "googleOAuthMode": "default",
+  "googleOAuthClientId": null
+}

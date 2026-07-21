@@ -1,0 +1,84 @@
+{
+  "name": "ActiveBlockers",
+  "type": "object",
+  "description": "Voice ingestion queue + synthesis telemetry (SynthesisStateStream).",
+  "properties": {
+    "owner_id": {
+      "type": "string",
+      "description": "Authenticated user ID — RLS isolation key"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Hackathon session this blocker belongs to"
+    },
+    "raw_transcript": {
+      "type": "string",
+      "description": "Literal text transcribed from voice"
+    },
+    "parsed_issue": {
+      "type": "string",
+      "description": "LLM-refined one-sentence problem statement"
+    },
+    "context_tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional tags e.g. database, auth, routing"
+    },
+    "urgency_flag": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when transcript signals urgent/blocker"
+    },
+    "assigned_agent": {
+      "type": "string",
+      "description": "AI node handling the job e.g. llm_reasoning_core"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "parsing_intent",
+        "querying_docs",
+        "generating_logic",
+        "verifying_syntax"
+      ],
+      "default": "parsing_intent",
+      "description": "SynthesisStateStream status"
+    },
+    "completion_percentage": {
+      "type": "number",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Drives SynthesisSpinner visual fill"
+    },
+    "current_focus": {
+      "type": "string",
+      "description": "Micro-text shown during synthesis"
+    },
+    "latency_ms": {
+      "type": "number",
+      "default": 0,
+      "description": "Elapsed synthesis latency"
+    },
+    "is_resolved": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once a GeneratedSolutions row exists"
+    }
+  },
+  "required": [
+    "owner_id",
+    "session_id",
+    "raw_transcript",
+    "urgency_flag",
+    "status",
+    "completion_percentage",
+    "is_resolved"
+  ],
+  "rls": {
+    "create": { "user_condition": { "id": "{{user.id}}" } },
+    "read": { "data.owner_id": "{{user.id}}" },
+    "update": { "data.owner_id": "{{user.id}}" },
+    "delete": { "data.owner_id": "{{user.id}}" }
+  }
+}

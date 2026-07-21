@@ -1,0 +1,71 @@
+{
+  "name": "GeneratedSolutions",
+  "type": "object",
+  "description": "AI resolution artifacts — ResolutionArtifact flattened for storage.",
+  "properties": {
+    "owner_id": {
+      "type": "string",
+      "description": "Authenticated user ID — RLS isolation key"
+    },
+    "blocker_reference": {
+      "type": "string",
+      "description": "ActiveBlockers record ID that triggered this artifact"
+    },
+    "solution_type": {
+      "type": "string",
+      "enum": ["code_snippet", "architecture_diagram", "terminal_command"],
+      "description": "ResolutionArtifact.solution_type"
+    },
+    "language": {
+      "type": "string",
+      "description": "Syntax language e.g. typescript, json, bash"
+    },
+    "code": {
+      "type": "string",
+      "description": "Raw code / command payload"
+    },
+    "file_path": {
+      "type": "string",
+      "description": "Optional target path e.g. /src/components/Button.tsx"
+    },
+    "neural_summary": {
+      "type": "string",
+      "description": "Minimalist context text above the code block"
+    },
+    "available_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["deploy", "override", "discard"]
+      },
+      "default": ["deploy", "override", "discard"],
+      "description": "UI actions available on this artifact"
+    },
+    "has_been_committed": {
+      "type": "boolean",
+      "default": false,
+      "description": "True after github_auto_commit succeeds"
+    },
+    "deployment_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Commit or deploy URL from ExecutionResult"
+    }
+  },
+  "required": [
+    "owner_id",
+    "blocker_reference",
+    "solution_type",
+    "language",
+    "code",
+    "neural_summary",
+    "available_actions",
+    "has_been_committed"
+  ],
+  "rls": {
+    "create": { "user_condition": { "id": "{{user.id}}" } },
+    "read": { "data.owner_id": "{{user.id}}" },
+    "update": { "data.owner_id": "{{user.id}}" },
+    "delete": { "data.owner_id": "{{user.id}}" }
+  }
+}

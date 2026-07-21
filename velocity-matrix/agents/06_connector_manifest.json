@@ -1,0 +1,75 @@
+# 06_connector_manifest.json
+
+## Purpose
+This document provides the configuration schema for the Base44 integrations required by the "Velocity Matrix" AI consultant. It defines how the system securely connects to third-party services—such as GitHub for code commits, Slack for push notifications, and AI reasoning providers—enabling the AI agent to interact with external tools without exposing sensitive OAuth keys or personal tokens to the client application.
+
+## Agent Implementation Instructions
+
+To the agent executing this blueprint, register these integrations within the Base44 backend configuration workspace.
+
+### Configuration Rules
+- **Environment Variable Isolation:** Secrets and API keys must never be hardcoded in the manifest. Always reference Base44 environment bindings (e.g., `${env.GITHUB_PAT}`).
+- **Least Privilege:** Request only the minimum OAuth scopes necessary for the AI consultant to perform actions (e.g., repository contents write access for GitHub, webhook posting for notifications).
+- **Connector Invocation:** In Deno functions, invoke these tools using the Base44 connector SDK: `await base44.connectors.get('connector_name').execute('action_name', payload)`.
+
+## Code Artifact
+
+```json
+{
+  "$schema": "[https://base44.dev/schemas/connector-manifest.v1.json](https://base44.dev/schemas/connector-manifest.v1.json)",
+  "version": "1.0.0",
+  "project": "velocity-matrix",
+  "connectors": {
+    "github_auto_commit": {
+      "type": "github",
+      "description": "Allows the AI consultant to automatically push generated code snippets and boilerplate directly into the hackathon repository.",
+      "auth": {
+        "mode": "personal_access_token",
+        "token": "${env.GITHUB_PAT}"
+      },
+      "scopes": [
+        "repo:status",
+        "public_repo",
+        "contents:write"
+      ],
+      "actions": {
+        "commit_file": {
+          "endpoint": "/repos/{owner}/{repo}/contents/{path}",
+          "method": "PUT",
+          "default_params": {
+            "branch": "main"
+          }
+        }
+      }
+    },
+    "slack_notifier": {
+      "type": "slack",
+      "description": "Sends instant push alerts to the hacker's device when background deployment loops resolve or require manual intervention.",
+      "auth": {
+        "mode": "bot_token",
+        "token": "${env.SLACK_BOT_TOKEN}"
+      },
+      "scopes": [
+        "chat:write",
+        "channels:read"
+      ],
+      "config": {
+        "default_channel_id": "${env.SLACK_CHANNEL_ID}"
+      }
+    },
+    "llm_reasoning_core": {
+      "type": "ai_provider",
+      "description": "Connects to the primary LLM reasoning engine to parse voice transcripts and synthesize functional TypeScript architecture.",
+      "auth": {
+        "mode": "api_key",
+        "key": "${env.LLM_API_KEY}"
+      },
+      "config": {
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet",
+        "temperature": 0.2,
+        "max_tokens": 4096
+      }
+    }
+  }
+}

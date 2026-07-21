@@ -1,0 +1,22 @@
+{
+  "name": "velocity-matrix-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx base44 dev",
+    "build": "vite build",
+    "deploy": "npx base44 deploy -y",
+    "types:generate": "npx base44 types generate",
+    "evals:run": "bun evals/runner.ts"
+  },
+  "dependencies": {
+    "@base44/sdk": "latest",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "base44": "latest",
+    "vite": "^5.0.0",
+    "typescript": "^5.2.2"
+  }
+}

@@ -1,0 +1,20 @@
+// base44/config.jsonc — workspace directory map for Base44 CLI
+{
+  "name": "velocity-matrix",
+  "description": "Autonomous AI Co-Founder Grid for high-velocity solo hackathons.",
+
+  // Backend Resource Directories
+  "entitiesDir": "./entities",
+  "functionsDir": "./functions",
+  "connectorsDir": "./connectors",
+  "authDir": "./auth",
+  "agentsDir": "./agents",
+
+  // Frontend Matrix UI Hosting Settings (UI deferred; paths reserved)
+  "site": {
+    "installCommand": "bun install",
+    "buildCommand": "bun run build",
+    "serveCommand": "bun run dev",
+    "outputDirectory": "../dist"
+  }
+}

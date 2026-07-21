@@ -1,0 +1,35 @@
+{
+  "name": "HackathonState",
+  "type": "object",
+  "description": "Global hackathon session context for the authenticated hacker.",
+  "properties": {
+    "owner_id": {
+      "type": "string",
+      "description": "Authenticated user ID — RLS isolation key"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Current hackathon session identifier"
+    },
+    "current_focus_area": {
+      "type": "string",
+      "description": "Overarching goal, e.g. Setting up Stripe webhooks"
+    },
+    "target_repo_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "GitHub repo URL for connector routing (auth_design Rule C)"
+    },
+    "last_active_timestamp": {
+      "type": "number",
+      "description": "Unix epoch ms for idle tracking"
+    }
+  },
+  "required": ["owner_id", "session_id", "current_focus_area", "last_active_timestamp"],
+  "rls": {
+    "create": { "user_condition": { "id": "{{user.id}}" } },
+    "read": { "data.owner_id": "{{user.id}}" },
+    "update": { "data.owner_id": "{{user.id}}" },
+    "delete": { "data.owner_id": "{{user.id}}" }
+  }
+}

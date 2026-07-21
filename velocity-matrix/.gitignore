@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+dist/
+build/
+.vite/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Base44 local app binding (contains app id)
+base44/.app.jsonc
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Logs & coverage
+*.log
+coverage/
+.turbo/
