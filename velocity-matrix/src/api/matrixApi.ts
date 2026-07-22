@@ -44,7 +44,7 @@ export async function processVoiceCommand(
     "process-voice-command",
     payload,
   );
-  return result as VoiceIngestionResponse;
+  return unwrapInvoke<VoiceIngestionResponse>(result);
 }
 
 /** Node 03 — execute-resolution (Deploy / Override / Discard) */
@@ -52,7 +52,15 @@ export async function executeResolution(
   payload: ExecutionPayload,
 ): Promise<ExecutionResult> {
   const result = await base44.functions.invoke("execute-resolution", payload);
-  return result as ExecutionResult;
+  return unwrapInvoke<ExecutionResult>(result);
+}
+
+/** Base44 invoke often wraps the function body under `.data` */
+function unwrapInvoke<T>(result: unknown): T {
+  if (result && typeof result === "object" && "data" in result) {
+    return (result as { data: T }).data;
+  }
+  return result as T;
 }
 
 /** Convenience: deploy/override/discard with github_auto_commit default */
