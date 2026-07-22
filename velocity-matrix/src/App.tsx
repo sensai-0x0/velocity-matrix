@@ -3,6 +3,8 @@ import { MatrixVoiceWave } from "./components/MatrixVoiceWave";
 import { NeuralNode, neuralNodePropsFromArtifact } from "./components/NeuralNode";
 import { SynthesisSpinner } from "./components/SynthesisSpinner";
 import { LockedCortex } from "./components/LockedCortex";
+import { ForgotPasswordPanel } from "./components/ForgotPasswordPanel";
+import { ResetPasswordPanel } from "./components/ResetPasswordPanel";
 import { CortexMockControls } from "./components/CortexMockControls";
 import { MatrixDisconnectToast } from "./components/MatrixDisconnectToast";
 import { AmbientVoicePanel } from "./components/AmbientVoicePanel";
@@ -12,6 +14,7 @@ import { ScopeInterruptStrip } from "./components/ScopeInterruptStrip";
 import { PhantomPulse } from "./components/PhantomPulse";
 import { MvpDeadlineSetup } from "./components/MvpDeadlineSetup";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useAuthRoute } from "@/hooks/useAuthRoute";
 import { useCortexView } from "@/hooks/useCortexView";
 import { useMatrixSubscriptions } from "@/hooks/useMatrixSubscriptions";
 import { usePhantomThreads } from "@/hooks/usePhantomThreads";
@@ -29,9 +32,11 @@ import {
 
 /**
  * React application root — Neuropunk Cortex + Phase 2.0 Co-Founder Expansion.
+ * Auth: Base44 `/forgot-password` + `/reset-password` deep-link workflow.
  */
 export default function App() {
   const { status, user, error, refresh, logout } = useAuthSession();
+  const authRoute = useAuthRoute();
   const { view, context, dispatch } = useCortexView(status);
   const authenticated = status === "authenticated";
   const {
@@ -206,9 +211,22 @@ export default function App() {
           </p>
         )}
 
-        {view === "locked" && status !== "loading" && (
-          <LockedCortex error={error} onAuthenticated={refresh} />
-        )}
+        {/* Base44 requires exact /forgot-password and /reset-password paths */}
+        {status !== "loading" &&
+          !authenticated &&
+          authRoute.path === "forgot-password" && <ForgotPasswordPanel />}
+
+        {status !== "loading" &&
+          !authenticated &&
+          authRoute.path === "reset-password" && (
+            <ResetPasswordPanel resetToken={authRoute.resetToken} />
+          )}
+
+        {view === "locked" &&
+          status !== "loading" &&
+          authRoute.path === "login" && (
+            <LockedCortex error={error} onAuthenticated={refresh} />
+          )}
 
         {view === "ambient" && <AmbientVoicePanel voice={voice} />}
 

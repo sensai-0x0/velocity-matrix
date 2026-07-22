@@ -16,7 +16,8 @@
     "scaffold": "bash agents/init_matrix.sh",
     "deploy:gate": "bun scripts/deploy-gate.ts",
     "predeploy": "bun run validate && bun run evals:run",
-    "deploy:raw": "npx base44 deploy -y"
+    "deploy:raw": "npx base44 deploy -y",
+    "user:register": "bun scripts/register-user.ts"
   },
   "dependencies": {
     "@base44/sdk": "latest",
