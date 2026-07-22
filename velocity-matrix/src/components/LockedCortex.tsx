@@ -9,14 +9,21 @@ import {
   enabledProviders,
   type AuthProviderId,
 } from "@/config/loginMethods";
+import { navigateAuth } from "@/lib/authRoutes";
 
 interface LockedCortexProps {
   error?: string | null;
+  /** Optional banner after a successful password reset */
+  notice?: string | null;
   onAuthenticated: () => Promise<void>;
 }
 
 /** Minimal Solo-Cell entry — dimmed until JWT session exists */
-export function LockedCortex({ error, onAuthenticated }: LockedCortexProps) {
+export function LockedCortex({
+  error,
+  notice,
+  onAuthenticated,
+}: LockedCortexProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,6 +57,12 @@ export function LockedCortex({ error, onAuthenticated }: LockedCortexProps) {
       <p className="locked-cortex-prompt" role="status">
         {">> CORTEX_LOCKED · authenticate to enter solo-cell"}
       </p>
+
+      {notice && (
+        <p className="locked-cortex-success" role="status">
+          {notice}
+        </p>
+      )}
 
       {providers.map((provider) => (
         <button
@@ -90,6 +103,14 @@ export function LockedCortex({ error, onAuthenticated }: LockedCortexProps) {
               disabled={busy}
             />
           </label>
+          <button
+            type="button"
+            className="auth-affordance auth-affordance-inline"
+            onClick={() => navigateAuth("forgot-password")}
+            disabled={busy}
+          >
+            [ Reset Password ]
+          </button>
         </form>
       )}
 

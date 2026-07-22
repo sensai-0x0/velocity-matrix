@@ -331,6 +331,13 @@ body {
   color: var(--crimson);
 }
 
+.locked-cortex-success {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--bio);
+}
+
 .cortex-mock {
   margin-top: 2rem;
   padding-top: 1.25rem;

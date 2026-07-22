@@ -29,6 +29,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    // SPA fallback so Base44 email deep-links (/forgot-password, /reset-password) resolve
+    appType: "spa",
     resolve: {
       alias: {
         "@": path.resolve(rootDir, "./src"),
