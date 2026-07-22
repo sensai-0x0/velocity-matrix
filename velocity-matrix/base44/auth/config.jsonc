@@ -1,6 +1,6 @@
-// Base44 auth config — real schema per docs.base44.com/developers/backend/resources/auth
-// GitHub OAuth is Enterprise SSO (loginWithProvider('sso')); enable in Dashboard → Auth → SSO.
-// Email/password remains available for local scaffold testing.
+// Zone 1 OAuth identity settings — synced to base44/auth/config.jsonc.
+// GitHub identity uses Base44 Enterprise SSO (auth_design.md Solo-Cell model).
+// Built-in social providers below; SSO is configured in the Base44 dashboard.
 {
   "enableUsernamePassword": true,
   "enableGoogleLogin": false,
@@ -9,6 +9,4 @@
   "enableAppleLogin": false,
   "googleOAuthMode": "default",
   "googleOAuthClientId": null
-  // After GitHub SSO is configured in the dashboard, clients call:
-  //   base44.auth.loginWithProvider('sso')
 }

@@ -1,13 +1,24 @@
 /**
- * Active Deno runtime synapses (Phase 4).
- * Synced from agents/03_backend_logic.ts via init_matrix.sh.
+ * Function index — documents the three Velocity Matrix synapses.
+ * Deployable entrypoints live in sibling directories.
  */
-
-/** Placeholder synapse entry — replace during Phase 4 deploy. */
-export async function index(_req: Request): Promise<Response> {
-  return Response.json({
-    ok: true,
-    zone: "base44/functions",
-    message: "Velocity Matrix synapses not yet deployed",
-  });
-}
+export const VELOCITY_MATRIX_FUNCTIONS = [
+  {
+    name: "process-voice-command",
+    node: "01_ingestor",
+    path: "./process-voice-command/entry.ts",
+    contract: "VoiceIngestionPayload -> VoiceIngestionResponse",
+  },
+  {
+    name: "synthesize-solution",
+    node: "02_synthesizer",
+    path: "./synthesize-solution/entry.ts",
+    contract: "ActiveBlockers INSERT -> ResolutionArtifact",
+  },
+  {
+    name: "execute-resolution",
+    node: "03_executor",
+    path: "./execute-resolution/entry.ts",
+    contract: "ExecutionPayload -> ExecutionResult",
+  },
+] as const;

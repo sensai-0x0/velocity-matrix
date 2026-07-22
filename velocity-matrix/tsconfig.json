@@ -15,13 +15,17 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
       "@agents/*": ["agents/*"]
     }
   },
-  "include": ["src", "agents", "evals", "base44"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "evals", "base44/entities", "base44/shared", "base44/functions/index.ts", "scripts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "base44/functions/**/entry.ts"
+  ]
 }

@@ -1,7 +1,7 @@
 {
   "name": "velocity-matrix-agents",
   "private": true,
-  "description": "Zone 1 Node.js environment definitions for the AI knowledge base",
+  "description": "Zone 1 blueprint helper — NOT the app package.json. App deps live at repo root.",
   "type": "module",
   "engines": {
     "node": ">=20"

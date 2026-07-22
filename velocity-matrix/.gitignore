@@ -12,6 +12,10 @@ build/
 # Base44 local app binding (contains app id)
 base44/.app.jsonc
 
+# Vendored Base44 agent skills (local install)
+.agents/
+.claude/
+
 # OS / editor
 .DS_Store
 *.swp
