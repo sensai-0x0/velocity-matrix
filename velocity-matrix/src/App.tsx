@@ -6,6 +6,7 @@ import { LockedCortex } from "./components/LockedCortex";
 import { CortexMockControls } from "./components/CortexMockControls";
 import { MatrixDisconnectToast } from "./components/MatrixDisconnectToast";
 import { AmbientVoicePanel } from "./components/AmbientVoicePanel";
+import { MatrixHistoryPanel } from "./components/MatrixHistoryPanel";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useCortexView } from "@/hooks/useCortexView";
 import { useMatrixSubscriptions } from "@/hooks/useMatrixSubscriptions";
@@ -16,7 +17,7 @@ import { base44 } from "@/api/base44Client";
 
 /**
  * React application root — Neuropunk Cortex surface.
- * F5/F6: synthesis telemetry + Resolution Feed execute-resolution actions.
+ * F7: continuous cancel/history voice + history layer + empty cortex idle.
  */
 export default function App() {
   const { status, user, error, refresh, logout } = useAuthSession();
@@ -34,8 +35,11 @@ export default function App() {
     activeBlockerId: context.activeBlockerId,
     dispatch,
   });
+
+  // Listen on all unlocked views; only Ambient submits ingest payloads
   const voice = useVoiceIngest({
-    enabled: authenticated && view === "ambient",
+    enabled: authenticated && view !== "locked",
+    allowIngest: view === "ambient",
     dispatch,
   });
   const resolution = useResolutionActions({
@@ -58,6 +62,10 @@ export default function App() {
   const waveActive = view === "ambient" && (voice.listening || voice.submitting);
   const waveAmplitude =
     view === "ambient" ? Math.max(0.35, voice.amplitude) : 0.25;
+  const authorityHint =
+    view === "synthesis" || view === "resolution"
+      ? '>> VOICE · "Cancel that" · "Show matrix history"'
+      : null;
 
   return (
     <main
@@ -101,6 +109,12 @@ export default function App() {
         )}
 
         {view === "ambient" && <AmbientVoicePanel voice={voice} />}
+
+        {authorityHint && (
+          <p className="cortex-authority-hint" role="status">
+            {authorityHint}
+          </p>
+        )}
 
         {view === "synthesis" && (
           <SynthesisSpinner
@@ -156,30 +170,11 @@ export default function App() {
         )}
 
         {view === "history" && (
-          <section className="cortex-history" aria-label="Matrix history">
-            <p className="cortex-ambient-hint" role="status">
-              {">> MATRIX_HISTORY"}
-            </p>
-            <ul className="cortex-history-list">
-              {solutions.slice(0, 8).map((s) => (
-                <li key={s.id ?? s.neural_summary}>
-                  <span className="history-bio">
-                    {s.neural_summary || s.id || "solution"}
-                  </span>
-                </li>
-              ))}
-              {solutions.length === 0 && (
-                <li className="cortex-probe">{"// no solutions yet"}</li>
-              )}
-            </ul>
-            <button
-              type="button"
-              className="auth-affordance"
-              onClick={() => dispatch({ type: "HIDE_HISTORY" })}
-            >
-              [ Return ]
-            </button>
-          </section>
+          <MatrixHistoryPanel
+            blockers={blockers}
+            solutions={solutions}
+            onReturn={() => dispatch({ type: "HIDE_HISTORY" })}
+          />
         )}
       </section>
 

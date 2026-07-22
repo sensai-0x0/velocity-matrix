@@ -1,5 +1,5 @@
 /**
- * Ambient Cortex voice / text ingest → process-voice-command (F4).
+ * Ambient Cortex voice / text ingest + continuous voice authority (F4/F7).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -11,14 +11,17 @@ import {
   getSpeechRecognitionCtor,
   type SpeechRecognitionLike,
 } from "@/lib/speechRecognition";
+import { matchVoiceAuthority } from "@/lib/voiceAuthority";
 
 const PAUSE_SUBMIT_MS = 1_200;
 
 export type VoiceIngestMode = "speech" | "text";
 
 export interface UseVoiceIngestOptions {
-  /** Only listen / accept input while Ambient Cortex is active */
+  /** Run continuous speech recognition (all unlocked views) */
   enabled: boolean;
+  /** When true, non-authority finals invoke process-voice-command */
+  allowIngest?: boolean;
   dispatch: (event: CortexEvent) => void;
 }
 
@@ -35,18 +38,6 @@ export interface UseVoiceIngestResult {
   startListening: () => void;
   stopListening: () => void;
   submitText: (transcript: string) => Promise<void>;
-}
-
-/** Detect Cancel / history voice authority phrases (F7 preview) */
-function matchVoiceAuthority(transcript: string): CortexEvent | null {
-  const t = transcript.trim().toLowerCase();
-  if (/^cancel that\.?$/.test(t) || t === "cancel") {
-    return { type: "CANCEL" };
-  }
-  if (/show matrix history/.test(t)) {
-    return { type: "SHOW_HISTORY" };
-  }
-  return null;
 }
 
 /** Lightweight context tags from transcript keywords */
@@ -66,6 +57,7 @@ function deriveContextTags(transcript: string): string[] {
 /** Speech pause / typed submit → VoiceIngestionPayload → Node 01 */
 export function useVoiceIngest({
   enabled,
+  allowIngest = true,
   dispatch,
 }: UseVoiceIngestOptions): UseVoiceIngestResult {
   const speechSupported = getSpeechRecognitionCtor() != null;
@@ -81,10 +73,12 @@ export function useVoiceIngest({
   const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalBufferRef = useRef("");
   const enabledRef = useRef(enabled);
+  const allowIngestRef = useRef(allowIngest);
   const dispatchRef = useRef(dispatch);
   const submittingRef = useRef(false);
 
   enabledRef.current = enabled;
+  allowIngestRef.current = allowIngest;
   dispatchRef.current = dispatch;
 
   const clearPauseTimer = useCallback(() => {
@@ -104,6 +98,13 @@ export function useVoiceIngest({
       setInterimTranscript("");
       finalBufferRef.current = "";
       dispatchRef.current(authority);
+      return;
+    }
+
+    // F7: during synthesis/resolution only authority phrases are acted on
+    if (!allowIngestRef.current) {
+      setInterimTranscript("");
+      finalBufferRef.current = "";
       return;
     }
 

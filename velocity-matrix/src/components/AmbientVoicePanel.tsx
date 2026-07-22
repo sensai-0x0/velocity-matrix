@@ -27,12 +27,14 @@ export function AmbientVoicePanel({ voice }: AmbientVoicePanelProps) {
 
   return (
     <section className="ambient-voice" aria-label="Ambient voice ingest">
-      <p className="cortex-ambient-hint" role="status">
-        {voice.listening
-          ? ">> LISTENING… pause to ingest"
-          : voice.speechSupported
-            ? ">> INGESTING_AUDIO… speech idle"
-            : ">> INGESTING_AUDIO… text fallback"}
+      <p className="cortex-ambient-hint" role="status" data-empty={!live}>
+        {voice.submitting
+          ? ">> INGESTING_AUDIO…"
+          : live && voice.listening
+            ? ">> LISTENING… pause to ingest"
+            : voice.speechSupported
+              ? ">> INGESTING_AUDIO…"
+              : ">> INGESTING_AUDIO… text fallback"}
       </p>
 
       {live ? (
@@ -43,7 +45,11 @@ export function AmbientVoicePanel({ voice }: AmbientVoicePanelProps) {
         >
           {live}
         </p>
-      ) : null}
+      ) : (
+        <p className="ambient-empty" aria-hidden="true">
+          {"// empty cortex · idle wave"}
+        </p>
+      )}
 
       <form className="ambient-text-form" onSubmit={onSubmit}>
         <label className="auth-field">

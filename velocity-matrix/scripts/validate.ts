@@ -450,6 +450,54 @@ if (!css.includes("data-failed") || !css.includes("neural-node-editor")) {
   ok("index.css F5/F6 styles");
 }
 
+console.log("\n>> [VALIDATE] Frontend F7 voice authority + history");
+for (const rel of [
+  "src/lib/voiceAuthority.ts",
+  "src/components/MatrixHistoryPanel.tsx",
+]) {
+  if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
+  else ok(rel);
+}
+const voiceAuth = readFileSync(join(ROOT, "src/lib/voiceAuthority.ts"), "utf8");
+const voiceHook = readFileSync(join(ROOT, "src/hooks/useVoiceIngest.ts"), "utf8");
+if (!voiceAuth.includes("matchVoiceAuthority") || !voiceAuth.includes("CANCEL")) {
+  fail("voiceAuthority.ts missing phrase matchers");
+} else {
+  ok("voiceAuthority phrase matchers");
+}
+if (
+  !voiceHook.includes("allowIngest") ||
+  !voiceHook.includes('from "@/lib/voiceAuthority"')
+) {
+  fail("useVoiceIngest missing F7 allowIngest / voiceAuthority");
+} else {
+  ok("useVoiceIngest F7 authority mode");
+}
+if (
+  !appSrc.includes("MatrixHistoryPanel") ||
+  !appSrc.includes("allowIngest") ||
+  !appSrc.includes('view !== "locked"')
+) {
+  fail("App.tsx missing F7 continuous authority / history wiring");
+} else {
+  ok("App.tsx F7 voice authority + history");
+}
+if (
+  !css.includes("cortex-authority-hint") ||
+  !css.includes("history-columns") ||
+  !css.includes("@media (max-width: 640px)")
+) {
+  fail("src/index.css missing F7 history / mobile styles");
+} else {
+  ok("index.css F7 styles");
+}
+const ambient = readFileSync(join(ROOT, "src/components/AmbientVoicePanel.tsx"), "utf8");
+if (!ambient.includes("INGESTING_AUDIO") || !ambient.includes("ambient-empty")) {
+  fail("AmbientVoicePanel missing empty cortex idle copy");
+} else {
+  ok("AmbientVoicePanel empty cortex");
+}
+
 console.log("\n>> [VALIDATE] No markdown contamination in config artifacts");
 for (const rel of ["base44/config.jsonc", "base44/connectors/manifest.json"]) {
   const raw = readFileSync(join(ROOT, rel), "utf8");
