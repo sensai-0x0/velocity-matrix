@@ -9,7 +9,7 @@
     "types:generate": "npx base44 types generate",
     "typecheck": "tsc --noEmit",
     "validate": "bun scripts/validate.ts && bun run typecheck",
-    "test": "bun test src/cortex",
+    "test": "bun test src/cortex src/lib src/api",
     "evals:run": "bun evals/runner.ts",
     "scaffold": "bash agents/init_matrix.sh"
   },
