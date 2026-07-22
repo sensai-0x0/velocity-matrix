@@ -63,9 +63,23 @@ Deno.serve(async (req) => {
       is_resolved: false,
     });
 
+    const blockerId = blocker.id as string;
+
+    // Dual-path (temporary): fire-and-forget Node 02 until entity automation is proven in deploy.
+    // Canonical path is ActiveBlockers INSERT automation on synthesize-solution/function.jsonc.
+    // Synthesizer is idempotent if both paths race.
+    void base44.functions
+      .invoke("synthesize-solution", { blocker_id: blockerId })
+      .catch((err: unknown) => {
+        console.warn(
+          "[process-voice-command] synthesize invoke failed (automation may still run)",
+          err,
+        );
+      });
+
     const response: VoiceIngestionResponse = {
       status: "acknowledged",
-      blocker_id: blocker.id as string,
+      blocker_id: blockerId,
       assigned_agent: ASSIGNED_AGENT,
     };
     return Response.json(response, { status: 200 });

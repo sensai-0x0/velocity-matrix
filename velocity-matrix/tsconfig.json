@@ -26,6 +26,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    "base44/functions/**/entry.ts"
+    "base44/functions/**/entry.ts",
+    "**/*.test.ts"
   ]
 }

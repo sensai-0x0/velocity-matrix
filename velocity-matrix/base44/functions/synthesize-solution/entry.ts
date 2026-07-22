@@ -9,10 +9,16 @@ import type {
   SynthesisStatus,
 } from "../../shared/contracts.ts";
 
+/** Manual invoke, entity automation, or nested connector-style payload */
 interface WebhookPayload {
   blocker_id?: string;
   record?: { id?: string };
   data?: { id?: string };
+  event?: { entity_id?: string; type?: string; entity_name?: string };
+  payload?: {
+    data?: { id?: string };
+    event?: { entity_id?: string };
+  };
 }
 
 interface LlmSolution {
@@ -48,9 +54,17 @@ const RESPONSE_SCHEMA = {
   ],
 };
 
-/** Resolve blocker id from webhook or direct invoke body */
+/** Resolve blocker id from webhook / entity automation / direct invoke body */
 function resolveBlockerId(body: WebhookPayload): string | null {
-  return body.blocker_id ?? body.record?.id ?? body.data?.id ?? null;
+  return (
+    body.blocker_id ??
+    body.event?.entity_id ??
+    body.record?.id ??
+    body.data?.id ??
+    body.payload?.event?.entity_id ??
+    body.payload?.data?.id ??
+    null
+  );
 }
 
 /** Patch ActiveBlockers with SynthesisStateStream telemetry */
@@ -102,6 +116,26 @@ Deno.serve(async (req) => {
     if (!blocker) {
       return Response.json(
         { status: "rejected", message: "blocker not found" },
+        { status: 200 },
+      );
+    }
+
+    // Idempotency: dual-path (automation + Node 01 invoke) must not double-synthesize
+    const status = blocker.status as string | undefined;
+    const pct = Number(blocker.completion_percentage ?? 0);
+    if (status && status !== "parsing_intent" && pct > 0) {
+      return Response.json(
+        { status: "skipped", message: "synthesis already in progress or complete" },
+        { status: 200 },
+      );
+    }
+
+    const existingSolutions = await base44.entities.GeneratedSolutions.filter({
+      blocker_reference: blockerId,
+    });
+    if (Array.isArray(existingSolutions) && existingSolutions.length > 0) {
+      return Response.json(
+        { status: "skipped", message: "artifact already exists for blocker" },
         { status: 200 },
       );
     }

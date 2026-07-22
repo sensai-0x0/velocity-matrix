@@ -187,6 +187,7 @@ console.log("\n>> [VALIDATE] Contract modules exist");
 for (const rel of [
   "src/contracts/data_contracts.ts",
   "base44/shared/contracts.ts",
+  "src/api/base44Client.ts",
 ]) {
   if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
   else ok(rel);
@@ -215,7 +216,86 @@ for (const name of expectedFns) {
   }
 }
 
-// Ensure no leftover markdown-as-config
+console.log("\n>> [VALIDATE] B1 ActiveBlockers → synthesize-solution automation");
+const synthFnConfig = join(fnDir, "synthesize-solution", "function.jsonc");
+try {
+  const cfg = parseJsonc(synthFnConfig) as {
+    automations?: Array<{
+      type?: string;
+      entity_name?: string;
+      event_types?: string[];
+      is_active?: boolean;
+    }>;
+  };
+  const entityHook = cfg.automations?.find(
+    (a) =>
+      a.type === "entity" &&
+      a.entity_name === "ActiveBlockers" &&
+      Array.isArray(a.event_types) &&
+      a.event_types.includes("create"),
+  );
+  if (!entityHook) {
+    fail(
+      "synthesize-solution/function.jsonc missing ActiveBlockers create automation",
+    );
+  } else if (entityHook.is_active === false) {
+    fail("on_active_blocker_create automation is inactive");
+  } else {
+    ok("ActiveBlockers create → synthesize-solution");
+  }
+} catch (e) {
+  fail(`synthesize-solution/function.jsonc: ${(e as Error).message}`);
+}
+
+const ingestSrc = readFileSync(
+  join(fnDir, "process-voice-command", "entry.ts"),
+  "utf8",
+);
+if (!ingestSrc.includes('invoke("synthesize-solution"')) {
+  fail("process-voice-command missing dual-path synthesize-solution invoke");
+} else {
+  ok("process-voice-command dual-path invoke");
+}
+
+console.log("\n>> [VALIDATE] Frontend F0 tokens");
+const css = readFileSync(join(ROOT, "src/index.css"), "utf8");
+for (const token of ["--crimson:", "--crimson-dim:"]) {
+  if (!css.includes(token)) fail(`src/index.css missing ${token}`);
+  else ok(`index.css ${token.replace(":", "")}`);
+}
+
+console.log("\n>> [VALIDATE] Frontend F1 auth gate");
+for (const rel of [
+  "src/hooks/useAuthSession.ts",
+  "src/components/LockedCortex.tsx",
+  "src/config/loginMethods.ts",
+  "src/lib/ensureHackathonState.ts",
+]) {
+  if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
+  else ok(rel);
+}
+const appSrc = readFileSync(join(ROOT, "src/App.tsx"), "utf8");
+if (!appSrc.includes("useAuthSession") || !appSrc.includes("LockedCortex")) {
+  fail("App.tsx missing F1 auth gate wiring");
+} else {
+  ok("App.tsx Locked Cortex gate");
+}
+
+console.log("\n>> [VALIDATE] Frontend F2 view machine");
+for (const rel of [
+  "src/cortex/cortexMachine.ts",
+  "src/hooks/useCortexView.ts",
+  "src/components/CortexMockControls.tsx",
+]) {
+  if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
+  else ok(rel);
+}
+if (!appSrc.includes("useCortexView") || !appSrc.includes("data-cortex={view}")) {
+  fail("App.tsx missing F2 view-state wiring");
+} else {
+  ok("App.tsx Cortex view machine");
+}
+
 console.log("\n>> [VALIDATE] No markdown contamination in config artifacts");
 for (const rel of ["base44/config.jsonc", "base44/connectors/manifest.json"]) {
   const raw = readFileSync(join(ROOT, rel), "utf8");
@@ -234,6 +314,7 @@ for (const key of [
   "LLM_API_KEY",
   "SLACK_BOT_TOKEN",
   "SLACK_CHANNEL_ID",
+  "VITE_BASE44_APP_ID",
 ]) {
   if (!envExample.includes(`${key}=`)) fail(`.env.example missing ${key}`);
   else ok(`.env.example ${key}`);

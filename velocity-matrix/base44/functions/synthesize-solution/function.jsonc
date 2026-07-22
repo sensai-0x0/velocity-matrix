@@ -1,0 +1,15 @@
+// Node 02 — entity automation closes the ActiveBlockers INSERT → synthesis synapse (B1).
+{
+  "name": "synthesize-solution",
+  "entry": "entry.ts",
+  "automations": [
+    {
+      "type": "entity",
+      "name": "on_active_blocker_create",
+      "description": "When Node 01 inserts an ActiveBlocker, run the Synthesis Grid (AGENTS.md Node 02).",
+      "is_active": true,
+      "entity_name": "ActiveBlockers",
+      "event_types": ["create"]
+    }
+  ]
+}

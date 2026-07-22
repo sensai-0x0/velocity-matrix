@@ -9,6 +9,7 @@
     "types:generate": "npx base44 types generate",
     "typecheck": "tsc --noEmit",
     "validate": "bun scripts/validate.ts && bun run typecheck",
+    "test": "bun test src/cortex",
     "evals:run": "bun evals/runner.ts",
     "scaffold": "bash agents/init_matrix.sh"
   },
@@ -21,6 +22,7 @@
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
     "base44": "latest",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"

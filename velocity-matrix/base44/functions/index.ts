@@ -14,6 +14,7 @@ export const VELOCITY_MATRIX_FUNCTIONS = [
     node: "02_synthesizer",
     path: "./synthesize-solution/entry.ts",
     contract: "ActiveBlockers INSERT -> ResolutionArtifact",
+    automation: "on_active_blocker_create (entity create)",
   },
   {
     name: "execute-resolution",

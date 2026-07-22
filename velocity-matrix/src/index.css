@@ -6,6 +6,8 @@
   --bio: #3dffc8;
   --bio-dim: #1a8f72;
   --bio-glow: rgba(61, 255, 200, 0.25);
+  --crimson: #e11d48;
+  --crimson-dim: #7f1d2e;
   --text: #d7f7ee;
   --text-muted: #6f9e91;
   --font-display: "IBM Plex Sans", "Segoe UI", sans-serif;
@@ -162,4 +164,144 @@ body {
   color: var(--text);
   background: rgba(5, 7, 10, 0.7);
   border-left: 2px solid var(--bio-dim);
+}
+
+/* F1 — Locked Cortex auth gate */
+.cortex-root[data-cortex="locked"] .matrix-voice-wave .wave-bar,
+.cortex-root[data-cortex="loading"] .matrix-voice-wave .wave-bar {
+  background: var(--bio-dim);
+  opacity: 0.45;
+}
+
+.cortex-session {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.75rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.cortex-probe,
+.cortex-ambient-hint,
+.locked-cortex-prompt,
+.locked-cortex-empty {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.locked-cortex {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  max-width: 24rem;
+}
+
+.auth-affordance {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--bio);
+  cursor: pointer;
+  text-align: left;
+  text-shadow: 0 0 12px var(--bio-glow);
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.auth-affordance:hover:not(:disabled),
+.auth-affordance:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.auth-affordance:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.auth-affordance-inline {
+  font-size: 0.85rem;
+  text-shadow: none;
+  color: var(--text-muted);
+}
+
+.auth-email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.auth-field {
+  display: grid;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: lowercase;
+}
+
+.auth-field input {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--bio-dim);
+  border-radius: 0;
+  background: rgba(11, 16, 24, 0.85);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.auth-field input:focus {
+  outline: 1px solid var(--bio);
+  border-color: var(--bio);
+}
+
+.locked-cortex-error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--crimson);
+}
+
+.cortex-mock {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(26, 143, 114, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cortex-mock-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--bio-dim);
+}
+
+.cortex-mock-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.cortex-history {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.cortex-root[data-cortex="synthesis"] .spinner-label {
+  color: var(--bio);
+  font-family: var(--font-mono);
 }
