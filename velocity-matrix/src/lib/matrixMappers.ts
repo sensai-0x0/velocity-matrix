@@ -1,0 +1,108 @@
+/**
+ * Map entity rows ↔ UI contracts for realtime subscriptions (F3).
+ */
+import type {
+  ResolutionArtifact,
+  SynthesisStateStream,
+  SynthesisStatus,
+} from "@/contracts/data_contracts";
+
+/** ActiveBlockers row shape from Base44 realtime events */
+export interface ActiveBlockerRow {
+  id?: string;
+  raw_transcript?: string;
+  parsed_issue?: string;
+  is_resolved?: boolean;
+  status?: string;
+  completion_percentage?: number;
+  current_focus?: string;
+  latency_ms?: number;
+  urgency_flag?: boolean;
+}
+
+/** GeneratedSolutions row shape from Base44 realtime events */
+export interface GeneratedSolutionRow {
+  id?: string;
+  blocker_reference?: string;
+  solution_type?: ResolutionArtifact["solution_type"];
+  language?: string;
+  code?: string;
+  file_path?: string;
+  neural_summary?: string;
+  available_actions?: ResolutionArtifact["available_actions"];
+  has_been_committed?: boolean;
+  deployment_url?: string;
+  created_date?: string;
+}
+
+const SYNTHESIS_STATUSES: SynthesisStatus[] = [
+  "parsing_intent",
+  "querying_docs",
+  "generating_logic",
+  "verifying_syntax",
+];
+
+/** Build SynthesisStateStream from an ActiveBlockers row */
+export function toSynthesisStream(
+  row: ActiveBlockerRow,
+  fallbackId: string,
+): SynthesisStateStream {
+  const status = SYNTHESIS_STATUSES.includes(row.status as SynthesisStatus)
+    ? (row.status as SynthesisStatus)
+    : "parsing_intent";
+
+  return {
+    blocker_id: (row.id as string | undefined) ?? fallbackId,
+    status,
+    completion_percentage: Number(row.completion_percentage ?? 0),
+    current_focus: row.current_focus ?? "",
+    latency_ms: Number(row.latency_ms ?? 0),
+  };
+}
+
+/** Build ResolutionArtifact from a GeneratedSolutions row */
+export function toResolutionArtifact(
+  row: GeneratedSolutionRow,
+  fallbackId: string,
+  timestamp: string,
+): ResolutionArtifact {
+  return {
+    artifact_id: (row.id as string | undefined) ?? fallbackId,
+    blocker_id: row.blocker_reference ?? "",
+    timestamp,
+    solution_type: row.solution_type ?? "code_snippet",
+    payload: {
+      language: row.language ?? "typescript",
+      code: row.code ?? "",
+      ...(row.file_path ? { file_path: row.file_path } : {}),
+    },
+    neural_summary: row.neural_summary ?? "",
+    available_actions: row.available_actions ?? ["deploy", "override", "discard"],
+  };
+}
+
+/** Stage label for Synthesis Grid (F5 will refine; F3 surfaces stream focus) */
+export function synthesisStageLabel(status: SynthesisStatus): string {
+  switch (status) {
+    case "parsing_intent":
+      return ">> PARSING_INTENT...";
+    case "querying_docs":
+      return ">> SCANNING_CONNECTORS...";
+    case "generating_logic":
+      return ">> SYNTHESIZING_ARCHITECTURE...";
+    case "verifying_syntax":
+      return ">> VERIFYING_SYNTAX...";
+    default:
+      return ">> SYNTHESIZING...";
+  }
+}
+
+/** Upsert by id at the front of a list */
+export function upsertFront<T extends { id?: string }>(
+  prev: T[],
+  row: T,
+  id: string,
+): T[] {
+  const withId = { ...row, id: row.id ?? id };
+  return [withId, ...prev.filter((item) => item.id !== id)];
+}

@@ -305,3 +305,41 @@ body {
   color: var(--bio);
   font-family: var(--font-mono);
 }
+
+.cortex-telemetry {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--bio-dim);
+}
+
+.cortex-history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.history-bio {
+  color: var(--bio);
+}
+
+.matrix-disconnect {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--crimson);
+  background: rgba(11, 16, 24, 0.92);
+  border: 1px solid var(--crimson-dim);
+  z-index: 40;
+}
