@@ -296,6 +296,24 @@ if (!appSrc.includes("useCortexView") || !appSrc.includes("data-cortex={view}"))
   ok("App.tsx Cortex view machine");
 }
 
+console.log("\n>> [VALIDATE] Frontend F3 subscriptions");
+for (const rel of [
+  "src/hooks/useMatrixSubscriptions.ts",
+  "src/lib/matrixMappers.ts",
+  "src/components/MatrixDisconnectToast.tsx",
+]) {
+  if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
+  else ok(rel);
+}
+if (
+  !appSrc.includes("useMatrixSubscriptions") ||
+  !appSrc.includes("MatrixDisconnectToast")
+) {
+  fail("App.tsx missing F3 subscription wiring");
+} else {
+  ok("App.tsx matrix subscriptions");
+}
+
 console.log("\n>> [VALIDATE] No markdown contamination in config artifacts");
 for (const rel of ["base44/config.jsonc", "base44/connectors/manifest.json"]) {
   const raw = readFileSync(join(ROOT, rel), "utf8");
