@@ -67,4 +67,34 @@ describe("reduceCortex", () => {
     expect(ctx.view).toBe("locked");
     expect(ctx.activeArtifactId).toBeNull();
   });
+
+  test("blueprint toggles and restores prior view", () => {
+    let ctx = reduceCortex(INITIAL_CORTEX_CONTEXT, { type: "AUTH_OK" });
+    ctx = reduceCortex(ctx, {
+      type: "ARTIFACT_CREATED",
+      artifactId: "a1",
+    });
+    ctx = reduceCortex(ctx, { type: "SHOW_BLUEPRINT" });
+    expect(ctx.view).toBe("blueprint");
+    expect(ctx.historyReturnView).toBe("resolution");
+
+    ctx = reduceCortex(ctx, { type: "HIDE_BLUEPRINT" });
+    expect(ctx.view).toBe("resolution");
+  });
+
+  test("scope warning sets peripheral interrupt without changing view", () => {
+    let ctx = reduceCortex(INITIAL_CORTEX_CONTEXT, { type: "AUTH_OK" });
+    ctx = reduceCortex(ctx, {
+      type: "SCOPE_WARNING",
+      hoursRemaining: 14,
+      warningMessage: "Custom WebSocket chat is out of MVP.",
+      shortcutSuggestion: "Use Base44 entity subscribe",
+    });
+    expect(ctx.view).toBe("ambient");
+    expect(ctx.scopeInterrupt?.hoursRemaining).toBe(14);
+    expect(ctx.scopeInterrupt?.shortcutSuggestion).toContain("Base44");
+
+    ctx = reduceCortex(ctx, { type: "DISMISS_SCOPE_WARNING" });
+    expect(ctx.scopeInterrupt).toBeNull();
+  });
 });

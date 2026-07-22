@@ -51,3 +51,18 @@ export const GeneratedSolutions = entity({
   typescript_code: types.string(), // The synthesized code artifact or terminal command
   has_been_committed: types.boolean().default(false), // Tracks if the GitHub connector has pushed this to the repo
 });
+
+---
+
+## Phase 2.0 schema extensions (Co-Founder Expansion)
+
+Pushable sources of truth: `base44/entities/*.jsonc` + `base44/entities/schema.ts`.
+
+| Entity | Additions |
+|--------|-----------|
+| `HackathonState` | `countdown_deadline`, `core_mvp_definition`, `hours_remaining_cache`, `scope_mode` |
+| `GeneratedSolutions` | `execution_mode`, phantom/merge fields, `eval_status`, `merge` action |
+| `PhantomThreads` | New — background worker progress (RLS `isolateToHacker`) |
+| `ArchitectureGraph` | New — Deno↔entity↔RLS graph snapshot (upsert per `session_id`; ≤200 nodes / ≤400 edges) |
+
+Typed event/payload contracts: `base44/shared/contracts.ts` (`MatrixTelemetryEvent`, `ScopeGradeResult`, `PhantomThread*`, `ArchitectureGraphPayload`).

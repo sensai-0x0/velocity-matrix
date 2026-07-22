@@ -49,7 +49,7 @@ Frontend may stub UI against contracts after `BE-0`; do not ship audio/graph/mer
 **Goal:** Extend Phase 1 entities and shared TypeScript contracts so all Phase 2 features share one typed surface.  
 **Depends on:** Phase 1 schemas live (`HackathonState`, `ActiveBlockers`, `GeneratedSolutions`).
 
-### [ ] BE-0.1 — Extend `HackathonState` for MVP + deadline
+### [x] BE-0.1 — Extend `HackathonState` for MVP + deadline
 
 - **Scope:** Add to entity + `schema.ts`:
   - `countdown_deadline: number` (Unix ms end of hackathon)
@@ -57,12 +57,12 @@ Frontend may stub UI against contracts after `BE-0`; do not ship audio/graph/mer
   - `hours_remaining_cache?: number` (optional denormalized for UI)
   - `scope_mode?: 'strict' | 'advisory'` (default `advisory`)
 - **Acceptance Criteria:**
-  - [ ] Entity JSONC / schema deployable via Base44 CLI
-  - [ ] RLS still isolates by `owner_id`
-  - [ ] Docs: `agents/02_entity_schemas.md` updated
-- **Completed:**
+  - [x] Entity JSONC / schema deployable via Base44 CLI
+  - [x] RLS still isolates by `owner_id`
+  - [x] Docs: `agents/02_entity_schemas.md` updated
+- **Completed:** 2026-07-22 · agent:cursor
 
-### [ ] BE-0.2 — Extend `GeneratedSolutions` for Phantom merge flow
+### [x] BE-0.2 — Extend `GeneratedSolutions` for Phantom merge flow
 
 - **Scope:** Add fields:
   - `execution_mode: 'sync' | 'phantom'`
@@ -72,12 +72,12 @@ Frontend may stub UI against contracts after `BE-0`; do not ship audio/graph/mer
   - `merge_status?: 'pending' | 'ready' | 'merged' | 'abandoned'`
   - `eval_status?: 'not_run' | 'passing' | 'failing'`
 - **Acceptance Criteria:**
-  - [ ] Existing Phase 1 rows remain valid (defaults for new fields)
-  - [ ] `available_actions` may include `'merge'` when `merge_ready`
-  - [ ] Schema + docs synced
-- **Completed:**
+  - [x] Existing Phase 1 rows remain valid (defaults for new fields)
+  - [x] `available_actions` may include `'merge'` when `merge_ready`
+  - [x] Schema + docs synced
+- **Completed:** 2026-07-22 · agent:cursor
 
-### [ ] BE-0.3 — New entity `PhantomThreads`
+### [x] BE-0.3 — New entity `PhantomThreads`
 
 - **Scope:** Create `PhantomThreads` entity:
   - `owner_id`, `session_id`
@@ -90,12 +90,12 @@ Frontend may stub UI against contracts after `BE-0`; do not ship audio/graph/mer
   - `error_trace?: string`
   - `started_at`, `finished_at?: number`
 - **Acceptance Criteria:**
-  - [ ] RLS `isolateToHacker` on all ops
-  - [ ] Subscribable for UI pulse indicator
-  - [ ] Listed in `ENTITY_NAMES`
-- **Completed:**
+  - [x] RLS `isolateToHacker` on all ops
+  - [x] Subscribable for UI pulse indicator
+  - [x] Listed in `ENTITY_NAMES`
+- **Completed:** 2026-07-22 · agent:cursor
 
-### [ ] BE-0.4 — New entity `ArchitectureGraph`
+### [x] BE-0.4 — New entity `ArchitectureGraph`
 
 - **Scope:** Store live dependency graph snapshots:
   - `owner_id`, `session_id`
@@ -104,11 +104,11 @@ Frontend may stub UI against contracts after `BE-0`; do not ship audio/graph/mer
   - `edges: Array<{ from: string; to: string; relation: 'reads' | 'writes' | 'invokes' | 'secures' }>`
   - `source_hash: string` (invalidate when code changes)
 - **Acceptance Criteria:**
-  - [ ] One active graph per `session_id` (upsert pattern documented)
-  - [ ] Payload size guarded (max nodes/edges documented)
-- **Completed:**
+  - [x] One active graph per `session_id` (upsert pattern documented)
+  - [x] Payload size guarded (max nodes/edges documented)
+- **Completed:** 2026-07-22 · agent:cursor
 
-### [ ] BE-0.5 — Shared contracts: Matrix telemetry + Phase 2 payloads
+### [x] BE-0.5 — Shared contracts: Matrix telemetry + Phase 2 payloads
 
 - **Scope:** Add to `base44/shared/contracts.ts` (+ mirror FE):
   - `PhantomThreadSpawnPayload` / `PhantomThreadStateStream`
@@ -117,9 +117,9 @@ Frontend may stub UI against contracts after `BE-0`; do not ship audio/graph/mer
   - `MatrixTelemetryEvent` union:
     - `PHANTOM_RUNNING` | `PHANTOM_COMPILING` | `SYNTHESIS_COMPLETE` | `EVALS_PASSED` | `EVALS_FAILED` | `MATRIX_DENIED` | `SCOPE_WARNING` | `BRANCH_READY`
 - **Acceptance Criteria:**
-  - [ ] Strict discriminated unions, no `any`
-  - [ ] Event names stable — FE audio map keys these strings
-- **Completed:**
+  - [x] Strict discriminated unions, no `any`
+  - [x] Event names stable — FE audio map keys these strings
+- **Completed:** 2026-07-22 · agent:cursor
 
 **Parent complete when:** all BE-0.* `[x]`
 

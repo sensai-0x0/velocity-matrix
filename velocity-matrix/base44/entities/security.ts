@@ -26,6 +26,8 @@ export const ENTITY_RLS = {
   HackathonState: isolateToHackerPolicy,
   ActiveBlockers: isolateToHackerPolicy,
   GeneratedSolutions: isolateToHackerPolicy,
+  PhantomThreads: isolateToHackerPolicy,
+  ArchitectureGraph: isolateToHackerPolicy,
 } as const;
 
 /** Entities that must enforce isolateToHacker */
@@ -36,4 +38,6 @@ export const MATRIX_DENIAL = {
   HackathonState: "MATRIX_DENIED: Unauthorized workspace access.",
   ActiveBlockers: "MATRIX_DENIED: Cannot intercept external audio streams.",
   GeneratedSolutions: "MATRIX_DENIED: Codebase access restricted.",
+  PhantomThreads: "MATRIX_DENIED: Phantom thread stream restricted.",
+  ArchitectureGraph: "MATRIX_DENIED: Neural map access restricted.",
 } as const;

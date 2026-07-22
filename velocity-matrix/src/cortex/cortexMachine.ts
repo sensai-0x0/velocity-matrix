@@ -1,5 +1,5 @@
 /**
- * Single-surface Cortex view-state machine (ui-plan §10 / F2).
+ * Single-surface Cortex view-state machine (ui-plan §10 / F2 + Phase 2).
  * Views are state transitions — not routes.
  */
 
@@ -8,7 +8,8 @@ export type CortexView =
   | "ambient"
   | "synthesis"
   | "resolution"
-  | "history";
+  | "history"
+  | "blueprint";
 
 /** Events that may advance the machine (auth, ingest, subscriptions, voice) */
 export type CortexEvent =
@@ -20,14 +21,32 @@ export type CortexEvent =
   | { type: "CANCEL" }
   | { type: "SHOW_HISTORY" }
   | { type: "HIDE_HISTORY" }
+  | { type: "SHOW_BLUEPRINT" }
+  | { type: "HIDE_BLUEPRINT" }
+  | {
+      type: "SCOPE_WARNING";
+      hoursRemaining: number;
+      warningMessage: string;
+      shortcutSuggestion?: string;
+    }
+  | { type: "DISMISS_SCOPE_WARNING" }
   | { type: "EXECUTION_SETTLED" };
+
+/** Peripheral Scope-Sniper interrupt (does not replace focal view) */
+export interface ScopeInterruptState {
+  hoursRemaining: number;
+  warningMessage: string;
+  shortcutSuggestion?: string;
+}
 
 export interface CortexContext {
   view: CortexView;
   activeBlockerId: string | null;
   activeArtifactId: string | null;
-  /** View to restore when leaving history */
-  historyReturnView: Exclude<CortexView, "history" | "locked"> | null;
+  /** View to restore when leaving history or blueprint */
+  historyReturnView: Exclude<CortexView, "history" | "locked" | "blueprint"> | null;
+  /** Non-route interrupt strip for Scope-Sniper */
+  scopeInterrupt: ScopeInterruptState | null;
 }
 
 export const INITIAL_CORTEX_CONTEXT: CortexContext = {
@@ -35,7 +54,22 @@ export const INITIAL_CORTEX_CONTEXT: CortexContext = {
   activeBlockerId: null,
   activeArtifactId: null,
   historyReturnView: null,
+  scopeInterrupt: null,
 };
+
+/** Views that may be restored after history/blueprint */
+type RestorableView = Exclude<CortexView, "history" | "locked" | "blueprint">;
+
+function asRestorable(view: CortexView): RestorableView | null {
+  if (
+    view === "ambient" ||
+    view === "synthesis" ||
+    view === "resolution"
+  ) {
+    return view;
+  }
+  return null;
+}
 
 /** Pure transition — UI holds no authoritative backend state */
 export function reduceCortex(
@@ -57,6 +91,7 @@ export function reduceCortex(
           activeBlockerId: null,
           activeArtifactId: null,
           historyReturnView: null,
+          scopeInterrupt: null,
         };
       }
       return ctx;
@@ -89,6 +124,7 @@ export function reduceCortex(
         activeBlockerId: null,
         activeArtifactId: null,
         historyReturnView: null,
+        scopeInterrupt: null,
       };
 
     case "SHOW_HISTORY":
@@ -96,7 +132,7 @@ export function reduceCortex(
       return {
         ...ctx,
         view: "history",
-        historyReturnView: ctx.view,
+        historyReturnView: asRestorable(ctx.view) ?? ctx.historyReturnView,
       };
 
     case "HIDE_HISTORY":
@@ -106,6 +142,38 @@ export function reduceCortex(
         view: ctx.historyReturnView ?? "ambient",
         historyReturnView: null,
       };
+
+    case "SHOW_BLUEPRINT":
+      if (ctx.view === "locked" || ctx.view === "blueprint") return ctx;
+      return {
+        ...ctx,
+        view: "blueprint",
+        historyReturnView: asRestorable(ctx.view) ?? ctx.historyReturnView,
+      };
+
+    case "HIDE_BLUEPRINT":
+      if (ctx.view !== "blueprint") return ctx;
+      return {
+        ...ctx,
+        view: ctx.historyReturnView ?? "ambient",
+        historyReturnView: null,
+      };
+
+    case "SCOPE_WARNING":
+      if (ctx.view === "locked") return ctx;
+      return {
+        ...ctx,
+        scopeInterrupt: {
+          hoursRemaining: event.hoursRemaining,
+          warningMessage: event.warningMessage,
+          ...(event.shortcutSuggestion
+            ? { shortcutSuggestion: event.shortcutSuggestion }
+            : {}),
+        },
+      };
+
+    case "DISMISS_SCOPE_WARNING":
+      return { ...ctx, scopeInterrupt: null };
 
     case "EXECUTION_SETTLED":
       // Stay on resolution — committed badge / crimson error handled by F6 props

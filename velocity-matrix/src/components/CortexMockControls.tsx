@@ -70,6 +70,35 @@ export function CortexMockControls({
             ? "[ Hide History ]"
             : "[ Show Matrix History ]"}
         </button>
+        <button
+          type="button"
+          className="auth-affordance auth-affordance-inline"
+          disabled={view === "locked"}
+          onClick={() =>
+            dispatch({
+              type: view === "blueprint" ? "HIDE_BLUEPRINT" : "SHOW_BLUEPRINT",
+            })
+          }
+        >
+          {view === "blueprint"
+            ? "[ Exit Neural Blueprint ]"
+            : "[ Visualize Data Flow ]"}
+        </button>
+        <button
+          type="button"
+          className="auth-affordance auth-affordance-inline"
+          disabled={view === "locked"}
+          onClick={() =>
+            dispatch({
+              type: "SCOPE_WARNING",
+              hoursRemaining: 14,
+              warningMessage: "High-friction request detected.",
+              shortcutSuggestion: "Base44 realtime subscribe shortcut",
+            })
+          }
+        >
+          [ Mock Scope Warning ]
+        </button>
       </div>
     </aside>
   );

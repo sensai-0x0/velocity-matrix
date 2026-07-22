@@ -49,7 +49,7 @@ FE-0 Contracts + design tokens
 **Goal:** Frontend can type Phase 2 payloads and mount feature surfaces without layout regressions.  
 **Depends on:** `BE-0.5` (or parallel stub with identical names).
 
-### [ ] FE-0.1 — Mirror Phase 2 TypeScript contracts
+### [x] FE-0.1 — Mirror Phase 2 TypeScript contracts
 
 - **Scope:** Extend `src/contracts/data_contracts.ts` with:
   - `PhantomThreadSpawnPayload`, `PhantomThreadStateStream`
@@ -57,32 +57,32 @@ FE-0 Contracts + design tokens
   - `ArchitectureGraphPayload`
   - `MatrixTelemetryEvent` discriminated union (exact string literals matching backend)
 - **Acceptance Criteria:**
-  - [ ] Compiles with `bun` / `tsc`
-  - [ ] No drift from `base44/shared/contracts.ts` (same field names)
-- **Completed:**
+  - [x] Compiles with `bun` / `tsc`
+  - [x] No drift from `base44/shared/contracts.ts` (same field names)
+- **Completed:** 2026-07-22 · agent:cursor
 
-### [ ] FE-0.2 — Design tokens for Phase 2 states
+### [x] FE-0.2 — Design tokens for Phase 2 states
 
 - **Scope:** In `src/index.css` add tokens as needed:
   - Phantom pulse (soft bio glow, not purple)
   - Scope warning amber/crimson interrupt (use existing `--crimson` where possible; avoid new neon rainbow)
   - Blueprint edge/node colors (bio-dim / bio)
 - **Acceptance Criteria:**
-  - [ ] Tokens documented in comment block
-  - [ ] No Inter/Roboto; keep `--font-mono`
-  - [ ] Still passes brand/void aesthetic of Phase 1
-- **Completed:**
+  - [x] Tokens documented in comment block
+  - [x] No Inter/Roboto; keep `--font-mono`
+  - [x] Still passes brand/void aesthetic of Phase 1
+- **Completed:** 2026-07-22 · agent:cursor
 
-### [ ] FE-0.3 — View mode enum + shell switch
+### [x] FE-0.3 — View mode enum + shell switch
 
 - **Scope:** Extend app shell so view modes include:
   - existing cortex / synthesis / resolution
   - `blueprint` (clears code feed for graph)
   - optional `scope_interrupt` overlay (non-route modal strip)
 - **Acceptance Criteria:**
-  - [ ] Voice/UI can request blueprint without router pages
-  - [ ] Leaving blueprint restores prior feed state
-- **Completed:**
+  - [x] Voice/UI can request blueprint without router pages
+  - [x] Leaving blueprint restores prior feed state
+- **Completed:** 2026-07-22 · agent:cursor
 
 **Parent complete when:** all FE-0.* `[x]`
 

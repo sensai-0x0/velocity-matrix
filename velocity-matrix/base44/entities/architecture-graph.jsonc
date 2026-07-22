@@ -1,0 +1,72 @@
+{
+  "name": "ArchitectureGraph",
+  "type": "object",
+  "description": "Live Deno↔entity↔RLS dependency graph snapshot (Phase 2.0). Upsert one active row per session_id.",
+  "properties": {
+    "owner_id": {
+      "type": "string",
+      "description": "Authenticated user ID — RLS isolation key"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Hackathon session — unique active graph key with owner"
+    },
+    "generated_at": {
+      "type": "number",
+      "description": "Unix ms when this snapshot was built"
+    },
+    "source_hash": {
+      "type": "string",
+      "description": "Content hash of scanned sources — invalidate when code changes"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "kind": {
+            "type": "string",
+            "enum": ["deno_fn", "entity", "rls_policy", "connector"]
+          },
+          "label": { "type": "string" },
+          "meta": { "type": "object" }
+        },
+        "required": ["id", "kind", "label"]
+      },
+      "default": [],
+      "description": "Graph nodes (soft max ~200 for UI budget)"
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "relation": {
+            "type": "string",
+            "enum": ["reads", "writes", "invokes", "secures"]
+          }
+        },
+        "required": ["from", "to", "relation"]
+      },
+      "default": [],
+      "description": "Directed edges (soft max ~400)"
+    }
+  },
+  "required": [
+    "owner_id",
+    "session_id",
+    "generated_at",
+    "source_hash",
+    "nodes",
+    "edges"
+  ],
+  "rls": {
+    "create": { "user_condition": { "id": "{{user.id}}" } },
+    "read": { "data.owner_id": "{{user.id}}" },
+    "update": { "data.owner_id": "{{user.id}}" },
+    "delete": { "data.owner_id": "{{user.id}}" }
+  }
+}

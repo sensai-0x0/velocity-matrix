@@ -7,6 +7,8 @@ import { CortexMockControls } from "./components/CortexMockControls";
 import { MatrixDisconnectToast } from "./components/MatrixDisconnectToast";
 import { AmbientVoicePanel } from "./components/AmbientVoicePanel";
 import { MatrixHistoryPanel } from "./components/MatrixHistoryPanel";
+import { NeuralBlueprintStub } from "./components/NeuralBlueprintStub";
+import { ScopeInterruptStrip } from "./components/ScopeInterruptStrip";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useCortexView } from "@/hooks/useCortexView";
 import { useMatrixSubscriptions } from "@/hooks/useMatrixSubscriptions";
@@ -17,7 +19,7 @@ import { base44 } from "@/api/base44Client";
 
 /**
  * React application root — Neuropunk Cortex surface.
- * F7: continuous cancel/history voice + history layer + empty cortex idle.
+ * F7 + Phase 2 shell hooks (blueprint view, scope interrupt strip).
  */
 export default function App() {
   const { status, user, error, refresh, logout } = useAuthSession();
@@ -52,6 +54,15 @@ export default function App() {
     resolution.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artifactId]);
+
+  useEffect(() => {
+    if (view !== "blueprint") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dispatch({ type: "HIDE_BLUEPRINT" });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [view, dispatch]);
 
   const activeBlocker =
     blockers.find((b) => b.id === context.activeBlockerId) ?? blockers[0];
@@ -91,12 +102,21 @@ export default function App() {
         )}
       </header>
 
-      <section className="cortex-stage" aria-label="Cortex stage">
-        <MatrixVoiceWave
-          active={waveActive}
-          amplitude={waveAmplitude}
-          urgency={view === "ambient" && voice.urgency}
+      {context.scopeInterrupt && (
+        <ScopeInterruptStrip
+          interrupt={context.scopeInterrupt}
+          onDismiss={() => dispatch({ type: "DISMISS_SCOPE_WARNING" })}
         />
+      )}
+
+      <section className="cortex-stage" aria-label="Cortex stage">
+        {view !== "blueprint" && (
+          <MatrixVoiceWave
+            active={waveActive}
+            amplitude={waveAmplitude}
+            urgency={view === "ambient" && voice.urgency}
+          />
+        )}
 
         {status === "loading" && (
           <p className="cortex-probe" role="status">
@@ -174,6 +194,12 @@ export default function App() {
             blockers={blockers}
             solutions={solutions}
             onReturn={() => dispatch({ type: "HIDE_HISTORY" })}
+          />
+        )}
+
+        {view === "blueprint" && (
+          <NeuralBlueprintStub
+            onExit={() => dispatch({ type: "HIDE_BLUEPRINT" })}
           />
         )}
       </section>

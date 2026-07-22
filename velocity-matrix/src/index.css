@@ -10,6 +10,12 @@
   --crimson-dim: #7f1d2e;
   --text: #d7f7ee;
   --text-muted: #6f9e91;
+  /* Phase 2.0 tokens — phantom pulse, scope interrupt, blueprint nodes */
+  --phantom-pulse: rgba(61, 255, 200, 0.45);
+  --scope-warn: #e11d48;
+  --scope-warn-dim: rgba(225, 29, 72, 0.18);
+  --blueprint-node: #3dffc8;
+  --blueprint-edge: #1a8f72;
   --font-display: "IBM Plex Sans", "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
 }
@@ -561,6 +567,50 @@ body {
 .history-meta {
   color: var(--bio-dim);
   font-size: 0.75rem;
+}
+
+/* Phase 2.0 — Scope-Sniper interrupt (peripheral, not a card wall) */
+.scope-interrupt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 1.25rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--crimson-dim);
+  border-bottom: 1px solid var(--crimson-dim);
+  background: var(--scope-warn-dim);
+}
+
+.scope-interrupt-copy {
+  margin: 0;
+  flex: 1 1 16rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--scope-warn);
+}
+
+/* Phase 2.0 — Neural Blueprint stub shell (FE-3 mounts WebGL here) */
+.neural-blueprint-stub {
+  min-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  font-family: var(--font-mono);
+}
+
+.neural-blueprint-stub-title {
+  margin: 0;
+  color: var(--blueprint-node);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 18px var(--phantom-pulse);
+}
+
+.neural-blueprint-stub-hint {
+  margin: 0;
+  color: var(--blueprint-edge);
+  font-size: 0.85rem;
 }
 
 /* F7: one composition on narrow viewports — brand + stage only */

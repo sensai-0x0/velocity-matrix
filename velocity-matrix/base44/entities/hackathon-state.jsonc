@@ -25,6 +25,24 @@
       "default": "main",
       "description": "Git branch for github_auto_commit (B5; default main)"
     },
+    "countdown_deadline": {
+      "type": "number",
+      "description": "Unix ms hackathon end — Scope-Sniper remaining-hours source (Phase 2)"
+    },
+    "core_mvp_definition": {
+      "type": "string",
+      "description": "In-scope MVP text blob graded by Synthesis Grid (Phase 2)"
+    },
+    "hours_remaining_cache": {
+      "type": "number",
+      "description": "Optional denormalized hours remaining for UI"
+    },
+    "scope_mode": {
+      "type": "string",
+      "enum": ["strict", "advisory"],
+      "default": "advisory",
+      "description": "strict may reject off-MVP synthesis; advisory warns only"
+    },
     "last_active_timestamp": {
       "type": "number",
       "description": "Unix epoch ms for idle tracking"

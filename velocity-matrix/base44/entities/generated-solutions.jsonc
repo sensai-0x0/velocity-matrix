@@ -36,15 +36,15 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["deploy", "override", "discard"]
+        "enum": ["deploy", "override", "discard", "merge"]
       },
       "default": ["deploy", "override", "discard"],
-      "description": "UI actions available on this artifact"
+      "description": "UI actions — include merge when phantom merge_ready"
     },
     "has_been_committed": {
       "type": "boolean",
       "default": false,
-      "description": "True after github_auto_commit succeeds"
+      "description": "True after github_auto_commit succeeds (branch push for phantoms)"
     },
     "deployment_url": {
       "type": "string",
@@ -55,6 +55,40 @@
       "type": "boolean",
       "default": false,
       "description": "True after Resolution Feed Discard — hide from active UI (B5)"
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": ["sync", "phantom"],
+      "default": "sync",
+      "description": "sync = Resolution Feed path; phantom = background thread"
+    },
+    "phantom_thread_id": {
+      "type": "string",
+      "description": "PhantomThreads id when execution_mode is phantom"
+    },
+    "git_branch": {
+      "type": "string",
+      "description": "Branch name for 1-click merge affordance"
+    },
+    "merge_ready": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when phantom branch is ready for explicit merge"
+    },
+    "merge_status": {
+      "type": "string",
+      "enum": ["pending", "ready", "merged", "abandoned"],
+      "description": "Phantom merge lifecycle"
+    },
+    "eval_status": {
+      "type": "string",
+      "enum": ["not_run", "passing", "failing"],
+      "default": "not_run",
+      "description": "Post-generation eval result for tactile telemetry"
+    },
+    "telemetry_event": {
+      "type": "string",
+      "description": "Last MatrixTelemetryEvent type for audio bridge"
     }
   },
   "required": [

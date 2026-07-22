@@ -63,6 +63,7 @@ export function NeuralNode({
     deploy: "[ Deploy ]",
     override: "[ Override ]",
     discard: "[ Discard ]",
+    merge: "[ Merge phantom branch ]",
   };
 
   const displayCode = editing || paused ? draft : revealed || code;
