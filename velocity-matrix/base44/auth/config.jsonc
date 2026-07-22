@@ -1,13 +1,12 @@
-// Zone 1 OAuth identity settings — synced to base44/auth/config.jsonc.
-// B0: GitHub Solo-Cell uses Base44 Enterprise SSO (auth_design.md).
-// Enable SSO in the Base44 dashboard, then set LOGIN_METHODS.sso = true (UI).
-// Email/password remains the local/dev fallback.
 {
   "enableUsernamePassword": true,
   "enableGoogleLogin": false,
   "enableMicrosoftLogin": false,
   "enableFacebookLogin": false,
   "enableAppleLogin": false,
+  "ssoProviderName": "GitHub",
+  "enableSSOLogin": true,
   "googleOAuthMode": "default",
-  "googleOAuthClientId": null
+  "googleOAuthClientId": null,
+  "useWorkspaceSSO": false
 }

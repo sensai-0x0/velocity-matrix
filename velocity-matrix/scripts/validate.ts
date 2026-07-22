@@ -93,31 +93,36 @@ for (const rel of jsoncFiles) {
   }
 }
 
-const manifestPath = join(ROOT, "base44/connectors/manifest.json");
-try {
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
-    connectors?: Record<string, unknown>;
-    $schema?: string;
-  };
-  if (manifest.$schema?.includes("](")) {
-    fail("manifest.json $schema still contains markdown link syntax");
-  } else {
-    ok("base44/connectors/manifest.json");
+// Base44 CLI 0.1.x: one file per connector — `{ type, scopes }` only (not a nested manifest).
+console.log("\n>> [VALIDATE] Connector resources (CLI schema)");
+const connectorsDir = join(ROOT, "base44/connectors");
+const requiredConnectors = [
+  "github_auto_commit",
+  "slack_notifier",
+  "llm_reasoning_core",
+];
+for (const name of requiredConnectors) {
+  const filePath = join(connectorsDir, `${name}.jsonc`);
+  if (!existsSync(filePath)) {
+    fail(`missing connector file: connectors/${name}.jsonc`);
+    continue;
   }
-  const requiredConnectors = [
-    "github_auto_commit",
-    "slack_notifier",
-    "llm_reasoning_core",
-  ];
-  for (const name of requiredConnectors) {
-    if (!manifest.connectors?.[name]) {
-      fail(`manifest missing connector: ${name}`);
+  try {
+    const raw = readFileSync(filePath, "utf8").replace(/^\s*\/\/.*$/gm, "");
+    const data = JSON.parse(raw) as { type?: string; scopes?: unknown };
+    if (data.type !== name) {
+      fail(`${name}.jsonc type must be "${name}" (got ${JSON.stringify(data.type)})`);
+    } else if (!Array.isArray(data.scopes)) {
+      fail(`${name}.jsonc scopes must be a string array`);
     } else {
-      ok(`connector: ${name}`);
+      ok(`connector: ${name}.jsonc`);
     }
+  } catch (e) {
+    fail(`${name}.jsonc: ${(e as Error).message}`);
   }
-} catch (e) {
-  fail(`manifest.json: ${(e as Error).message}`);
+}
+if (existsSync(join(connectorsDir, "manifest.json"))) {
+  fail("base44/connectors/manifest.json is invalid for CLI 0.1.x — use per-type *.jsonc files");
 }
 
 console.log("\n>> [VALIDATE] Schema ↔ SynthesisStateStream / ResolutionArtifact parity");
@@ -654,7 +659,12 @@ if (!ambient.includes("INGESTING_AUDIO") || !ambient.includes("ambient-empty")) 
 }
 
 console.log("\n>> [VALIDATE] No markdown contamination in config artifacts");
-for (const rel of ["base44/config.jsonc", "base44/connectors/manifest.json"]) {
+for (const rel of [
+  "base44/config.jsonc",
+  "base44/connectors/github_auto_commit.jsonc",
+  "base44/connectors/slack_notifier.jsonc",
+  "base44/connectors/llm_reasoning_core.jsonc",
+]) {
   const raw = readFileSync(join(ROOT, rel), "utf8");
   if (raw.includes("## Purpose") || raw.includes("```")) {
     fail(`${rel} still contains markdown documentation`);

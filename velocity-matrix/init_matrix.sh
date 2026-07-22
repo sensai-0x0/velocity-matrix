@@ -30,9 +30,12 @@ if [[ -f agents/08_auth_config.jsonc ]]; then
 fi
 
 # Connectors (Phase 3)
-if [[ -f agents/06_connector_manifest.json ]]; then
-  cp agents/06_connector_manifest.json base44/connectors/manifest.json
-  echo "  ✓ base44/connectors/manifest.json ← agents/06_connector_manifest.json"
+# Blueprint agents/06 stays docs-only. CLI 0.1.x uses per-connector *.jsonc files.
+if [[ ! -f base44/connectors/github_auto_commit.jsonc ]]; then
+  echo "  ✗ missing base44/connectors/*.jsonc (CLI connector resources)"
+  exit 1
+else
+  echo "  ✓ base44/connectors/*.jsonc present"
 fi
 
 # Seed .env if missing

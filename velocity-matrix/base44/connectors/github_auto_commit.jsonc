@@ -1,0 +1,8 @@
+{
+  "type": "github_auto_commit",
+  "scopes": [
+    "repo:status",
+    "public_repo",
+    "contents:write"
+  ]
+}

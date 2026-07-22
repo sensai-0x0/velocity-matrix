@@ -1,0 +1,7 @@
+{
+  "type": "slack_notifier",
+  "scopes": [
+    "chat:write",
+    "channels:read"
+  ]
+}
