@@ -106,3 +106,24 @@ export function upsertFront<T extends { id?: string }>(
   const withId = { ...row, id: row.id ?? id };
   return [withId, ...prev.filter((item) => item.id !== id)];
 }
+
+/** True when Node 02 timed out / queued for retry */
+export function isDegradedBlocker(row: ActiveBlockerRow | null | undefined): boolean {
+  if (!row) return false;
+  const focus = row.current_focus ?? "";
+  const issue = row.parsed_issue ?? "";
+  return (
+    /queued for retry|degraded|limit_cooldown|cooldown/i.test(focus) ||
+    /^Degraded:/i.test(issue)
+  );
+}
+
+/** True when silent failure left a crimson Failed Node */
+export function isFailedBlocker(row: ActiveBlockerRow | null | undefined): boolean {
+  if (!row) return false;
+  return (
+    row.is_resolved === false &&
+    /^System Error:/i.test(row.parsed_issue ?? "")
+  );
+}
+

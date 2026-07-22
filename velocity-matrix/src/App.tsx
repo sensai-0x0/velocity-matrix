@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { MatrixVoiceWave } from "./components/MatrixVoiceWave";
-import { NeuralNode } from "./components/NeuralNode";
+import { NeuralNode, neuralNodePropsFromArtifact } from "./components/NeuralNode";
 import { SynthesisSpinner } from "./components/SynthesisSpinner";
 import { LockedCortex } from "./components/LockedCortex";
 import { CortexMockControls } from "./components/CortexMockControls";
@@ -9,11 +10,13 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import { useCortexView } from "@/hooks/useCortexView";
 import { useMatrixSubscriptions } from "@/hooks/useMatrixSubscriptions";
 import { useVoiceIngest } from "@/hooks/useVoiceIngest";
+import { useResolutionActions } from "@/hooks/useResolutionActions";
+import { isDegradedBlocker, isFailedBlocker } from "@/lib/matrixMappers";
 import { base44 } from "@/api/base44Client";
 
 /**
  * React application root — Neuropunk Cortex surface.
- * F4: Ambient voice/text ingest → process-voice-command → Synthesis view.
+ * F5/F6: synthesis telemetry + Resolution Feed execute-resolution actions.
  */
 export default function App() {
   const { status, user, error, refresh, logout } = useAuthSession();
@@ -23,9 +26,9 @@ export default function App() {
     synthesis,
     latestArtifact,
     solutions,
+    blockers,
     disconnectMessage,
     clearDisconnect,
-    synthesisLabel,
   } = useMatrixSubscriptions({
     enabled: authenticated,
     activeBlockerId: context.activeBlockerId,
@@ -35,6 +38,21 @@ export default function App() {
     enabled: authenticated && view === "ambient",
     dispatch,
   });
+  const resolution = useResolutionActions({
+    artifactId: context.activeArtifactId ?? latestArtifact?.artifact_id ?? null,
+    dispatch,
+  });
+
+  const artifactId = latestArtifact?.artifact_id ?? null;
+  useEffect(() => {
+    resolution.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artifactId]);
+
+  const activeBlocker =
+    blockers.find((b) => b.id === context.activeBlockerId) ?? blockers[0];
+  const degraded = isDegradedBlocker(activeBlocker);
+  const failed = isFailedBlocker(activeBlocker);
 
   const sdkReady = base44.getConfig().appId !== "velocity-matrix-unset";
   const waveActive = view === "ambient" && (voice.listening || voice.submitting);
@@ -85,52 +103,55 @@ export default function App() {
         {view === "ambient" && <AmbientVoicePanel voice={voice} />}
 
         {view === "synthesis" && (
-          <>
-            <SynthesisSpinner
-              synthesizing
-              label={synthesisLabel}
-              {...(synthesis != null
-                ? {
-                    progress: synthesis.completion_percentage,
-                    status: synthesis.status,
-                    focus: synthesis.current_focus,
-                    latencyMs: synthesis.latency_ms,
-                  }
-                : {})}
-            />
-            <p className="cortex-probe" role="status">
-              {synthesis?.current_focus ||
-                (context.activeBlockerId
-                  ? `blocker:${context.activeBlockerId}`
-                  : ">> AWAITING_TELEMETRY")}
-            </p>
-          </>
+          <SynthesisSpinner
+            synthesizing={!failed}
+            degraded={degraded}
+            failed={failed}
+            {...(synthesis != null
+              ? {
+                  progress: synthesis.completion_percentage,
+                  status: synthesis.status,
+                  latencyMs: synthesis.latency_ms,
+                  ...(() => {
+                    const focus =
+                      failed || degraded
+                        ? activeBlocker?.parsed_issue ||
+                          synthesis.current_focus
+                        : synthesis.current_focus;
+                    return focus ? { focus } : {};
+                  })(),
+                }
+              : (() => {
+                  const focus =
+                    activeBlocker?.parsed_issue ||
+                    activeBlocker?.current_focus;
+                  return focus ? { focus } : {};
+                })())}
+          />
         )}
 
         {view === "resolution" && (
           <NeuralNode
-            title="Resolution Feed"
-            {...(latestArtifact?.neural_summary
-              ? { summary: latestArtifact.neural_summary }
-              : {})}
-            {...(latestArtifact?.payload.language
-              ? { language: latestArtifact.payload.language }
-              : {})}
-            {...(latestArtifact?.payload.file_path
-              ? { filePath: latestArtifact.payload.file_path }
-              : {})}
-            code={
-              latestArtifact?.payload.code ||
-              (context.activeArtifactId
-                ? `// artifact ${context.activeArtifactId}\n// awaiting F6 execute-resolution bind`
-                : "// awaiting execution trace")
-            }
-            {...(latestArtifact?.available_actions
-              ? { actions: latestArtifact.available_actions }
-              : {})}
+            {...(latestArtifact
+              ? neuralNodePropsFromArtifact(latestArtifact)
+              : {
+                  title: "Resolution Feed",
+                  code: context.activeArtifactId
+                    ? `// artifact ${context.activeArtifactId}`
+                    : "",
+                })}
             {...(synthesis != null
               ? { latencyMs: synthesis.latency_ms }
               : {})}
+            committed={resolution.committed}
+            busy={resolution.busy}
+            {...(resolution.deploymentUrl
+              ? { deploymentUrl: resolution.deploymentUrl }
+              : {})}
+            {...(resolution.errorTrace
+              ? { errorTrace: resolution.errorTrace }
+              : {})}
+            onAction={resolution.handleAction}
           />
         )}
 

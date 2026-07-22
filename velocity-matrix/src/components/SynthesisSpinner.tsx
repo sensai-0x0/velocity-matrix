@@ -1,14 +1,13 @@
 /**
- * Synthesis Grid visualizer — tracks Node 02 artifact compilation.
- * Props align with SynthesisStateStream for F5 wiring.
+ * Synthesis Grid visualizer — tracks Node 02 artifact compilation (F5).
  */
 import type { CSSProperties } from "react";
 import type { SynthesisStatus } from "@/contracts/data_contracts";
 
 const STATUS_LABELS: Record<SynthesisStatus, string> = {
   parsing_intent: ">> PARSING_INTENT…",
-  querying_docs: ">> QUERYING_DOCS…",
-  generating_logic: ">> GENERATING_LOGIC…",
+  querying_docs: ">> SCANNING_CONNECTORS…",
+  generating_logic: ">> SYNTHESIZING_ARCHITECTURE…",
   verifying_syntax: ">> VERIFYING_SYNTAX…",
 };
 
@@ -20,22 +19,24 @@ export function SynthesisSpinner({
   focus,
   latencyMs,
   degraded = false,
+  failed = false,
 }: {
   synthesizing?: boolean;
   label?: string;
-  /** SynthesisStateStream.completion_percentage */
   progress?: number;
-  /** SynthesisStateStream.status */
   status?: SynthesisStatus;
-  /** SynthesisStateStream.current_focus */
   focus?: string;
-  /** SynthesisStateStream.latency_ms */
   latencyMs?: number;
-  /** Degraded / retrying UX from Node 02 timeout path */
   degraded?: boolean;
+  failed?: boolean;
 }) {
-  const displayLabel =
-    status != null ? STATUS_LABELS[status] : label;
+  const displayLabel = failed
+    ? ">> FAILED_NODE"
+    : degraded
+      ? ">> DEGRADED · RETRYING..."
+      : status != null
+        ? STATUS_LABELS[status]
+        : label;
   const pct =
     progress != null ? Math.max(0, Math.min(100, progress)) : undefined;
 
@@ -44,26 +45,27 @@ export function SynthesisSpinner({
       className="synthesis-spinner"
       data-synthesizing={synthesizing}
       data-degraded={degraded}
+      data-failed={failed}
       style={
         pct != null
           ? ({ "--synthesis-progress": `${pct}%` } as CSSProperties)
           : undefined
       }
-      aria-busy={synthesizing}
+      aria-busy={synthesizing && !failed}
       aria-label={displayLabel}
       role="status"
     >
-      <div className="spinner-ring" />
-      <span className="spinner-label">
-        {synthesizing ? displayLabel : "Idle"}
-      </span>
-      {focus ? <span className="spinner-focus">{focus}</span> : null}
-      {latencyMs != null ? (
-        <span className="spinner-latency">{latencyMs}ms</span>
-      ) : null}
-      {pct != null ? (
-        <span className="spinner-progress">{Math.round(pct)}%</span>
-      ) : null}
+      <div className="spinner-ring" aria-hidden />
+      <div className="spinner-copy">
+        <span className="spinner-label">
+          {synthesizing || degraded || failed ? displayLabel : "Idle"}
+        </span>
+        {focus ? <span className="spinner-focus">{focus}</span> : null}
+        <span className="spinner-meta">
+          {latencyMs != null ? <span>{latencyMs}ms</span> : null}
+          {pct != null ? <span>{Math.round(pct)}%</span> : null}
+        </span>
+      </div>
     </div>
   );
 }

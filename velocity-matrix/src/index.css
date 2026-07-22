@@ -456,3 +456,63 @@ body {
   gap: 0.75rem 1.25rem;
 }
 
+.spinner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.spinner-meta {
+  display: flex;
+  gap: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--bio-dim);
+}
+
+.synthesis-spinner[data-failed="true"] .spinner-ring {
+  border-color: var(--crimson-dim);
+  border-top-color: var(--crimson);
+  animation: none;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.35);
+}
+
+.synthesis-spinner[data-failed="true"] .spinner-label,
+.synthesis-spinner[data-failed="true"] .spinner-focus {
+  color: var(--crimson);
+}
+
+.neural-node-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.neural-node[data-editing="true"] {
+  padding: 1rem;
+  background: rgba(11, 16, 24, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(61, 255, 200, 0.18);
+}
+
+.neural-node-editor {
+  width: 100%;
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--bio-dim);
+  border-radius: 0;
+  background: rgba(5, 7, 10, 0.85);
+  color: var(--bio);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.neural-node-editor:focus {
+  outline: 1px solid var(--bio);
+  border-color: var(--bio);
+}
+

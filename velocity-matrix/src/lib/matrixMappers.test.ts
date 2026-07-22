@@ -3,6 +3,8 @@
  */
 import { describe, expect, test } from "bun:test";
 import {
+  isDegradedBlocker,
+  isFailedBlocker,
   synthesisStageLabel,
   toResolutionArtifact,
   toSynthesisStream,
@@ -48,5 +50,23 @@ describe("matrixMappers", () => {
   test("upsertFront prepends and dedupes", () => {
     const next = upsertFront([{ id: "1" }, { id: "2" }], { id: "2", raw: 1 }, "2");
     expect(next.map((r) => r.id)).toEqual(["2", "1"]);
+  });
+
+  test("degraded / failed blocker detectors", () => {
+    expect(
+      isDegradedBlocker({
+        current_focus: "Queued for retry",
+        parsed_issue: "Degraded: LLM_TIMEOUT",
+      }),
+    ).toBe(true);
+    expect(
+      isFailedBlocker({
+        is_resolved: false,
+        parsed_issue: "System Error: boom",
+      }),
+    ).toBe(true);
+    expect(isFailedBlocker({ is_resolved: true, parsed_issue: "ok" })).toBe(
+      false,
+    );
   });
 });

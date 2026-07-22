@@ -408,6 +408,48 @@ if (!css.includes('data-urgency="true"') && !css.includes("[data-urgency=")) {
   ok("index.css urgency wave");
 }
 
+console.log("\n>> [VALIDATE] Frontend F5/F6 synthesis + resolution");
+for (const rel of [
+  "src/hooks/useResolutionActions.ts",
+  "src/components/SynthesisSpinner.tsx",
+  "src/components/NeuralNode.tsx",
+]) {
+  if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
+  else ok(rel);
+}
+const spinnerSrc = readFileSync(
+  join(ROOT, "src/components/SynthesisSpinner.tsx"),
+  "utf8",
+);
+if (!spinnerSrc.includes("degraded") || !spinnerSrc.includes("failed")) {
+  fail("SynthesisSpinner missing degraded/failed props");
+} else {
+  ok("SynthesisSpinner degraded/failed");
+}
+const nodeSrc = readFileSync(
+  join(ROOT, "src/components/NeuralNode.tsx"),
+  "utf8",
+);
+if (!nodeSrc.includes("onAction") || !nodeSrc.includes("TYPE_MS")) {
+  fail("NeuralNode missing type-reveal / onAction");
+} else {
+  ok("NeuralNode type-reveal + actions");
+}
+if (
+  !appSrc.includes("useResolutionActions") ||
+  !appSrc.includes("isDegradedBlocker") ||
+  !appSrc.includes("isFailedBlocker")
+) {
+  fail("App.tsx missing F5/F6 resolution wiring");
+} else {
+  ok("App.tsx F5/F6 resolution feed");
+}
+if (!css.includes("data-failed") || !css.includes("neural-node-editor")) {
+  fail("src/index.css missing failed spinner / editor styles");
+} else {
+  ok("index.css F5/F6 styles");
+}
+
 console.log("\n>> [VALIDATE] No markdown contamination in config artifacts");
 for (const rel of ["base44/config.jsonc", "base44/connectors/manifest.json"]) {
   const raw = readFileSync(join(ROOT, rel), "utf8");
