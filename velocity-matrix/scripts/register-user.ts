@@ -10,6 +10,7 @@
  *   SEED_USER_EMAIL=you@example.com SEED_USER_PASSWORD='…' bun scripts/register-user.ts
  */
 import { createClient } from "@base44/sdk";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,11 +35,40 @@ function resolveAppId(): string {
   return id;
 }
 
+/** Read password from macOS Keychain when env is unset (local-only; never logged). */
+function passwordFromKeychain(account: string): string | null {
+  if (process.platform !== "darwin") return null;
+  try {
+    const r = spawnSync(
+      "security",
+      [
+        "find-generic-password",
+        "-s",
+        "velocity-matrix.base44",
+        "-a",
+        account,
+        "-w",
+      ],
+      { encoding: "utf8" },
+    );
+    if (r.status !== 0) return null;
+    const secret = (r.stdout || "").trim();
+    return secret.length > 0 ? secret : null;
+  } catch {
+    return null;
+  }
+}
+
 const email = process.env.SEED_USER_EMAIL?.trim();
-const password = process.env.SEED_USER_PASSWORD;
+const password =
+  process.env.SEED_USER_PASSWORD ||
+  (email ? passwordFromKeychain(email) : null);
 if (!email || !password) {
   console.error(
-    ">> [FATAL] Set SEED_USER_EMAIL and SEED_USER_PASSWORD in the environment (do not commit them).",
+    ">> [FATAL] Set SEED_USER_EMAIL and SEED_USER_PASSWORD (env), or store the password in macOS Keychain:",
+  );
+  console.error(
+    '   security add-generic-password -s velocity-matrix.base44 -a "you@example.com" -w',
   );
   process.exit(1);
 }
