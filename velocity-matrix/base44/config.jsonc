@@ -10,11 +10,11 @@
   "authDir": "./auth",
   "agentsDir": "./agents",
 
-  // Frontend Matrix UI Hosting Settings (UI deferred; paths reserved)
+  // Frontend Matrix UI Hosting — paths are relative to project root (not base44/)
   "site": {
     "installCommand": "bun install",
     "buildCommand": "bun run build",
     "serveCommand": "bun run dev",
-    "outputDirectory": "../dist"
+    "outputDirectory": "./dist"
   }
 }

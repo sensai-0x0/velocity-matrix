@@ -27,11 +27,11 @@ To the agent executing this blueprint, create the `base44/config.jsonc` file exa
   "authDir": "./auth",
   "agentsDir": "./agents",
 
-  // Frontend Matrix UI Hosting Settings
+  // Frontend Matrix UI Hosting — paths relative to project root (Base44 CLI resolve)
   "site": {
-    "installCommand": "npm install",
-    "buildCommand": "npm run build",
-    "serveCommand": "npm run dev",
-    "outputDirectory": "../dist" // Assumes Vite/React frontend built outside the base44 folder
+    "installCommand": "bun install",
+    "buildCommand": "bun run build",
+    "serveCommand": "bun run dev",
+    "outputDirectory": "./dist"
   }
 }
