@@ -211,6 +211,8 @@ for (const name of [
   "ResolutionArtifact",
   "ExecutionPayload",
   "ExecutionResult",
+  "ProvisionHackathonStatePayload",
+  "ProvisionHackathonStateResult",
 ]) {
   const uiHas = uiContracts.includes(`export interface ${name}`);
   const beHas = beContracts.includes(`export interface ${name}`);
@@ -258,6 +260,7 @@ for (const invoke of [
   "process-voice-command",
   "execute-resolution",
   "buildVoiceIngestionPayload",
+  "provisionHackathonState",
 ]) {
   if (!apiSrc.includes(invoke)) fail(`matrixApi missing ${invoke}`);
   else ok(`matrixApi ${invoke}`);
@@ -266,6 +269,7 @@ for (const invoke of [
 console.log("\n>> [VALIDATE] Deno function entrypoints");
 const fnDir = join(ROOT, "base44/functions");
 const expectedFns = [
+  "provision-hackathon-state",
   "process-voice-command",
   "synthesize-solution",
   "execute-resolution",
@@ -325,6 +329,31 @@ if (!ingestSrc.includes('invoke("synthesize-solution"')) {
   fail("process-voice-command missing dual-path synthesize-solution invoke");
 } else {
   ok("process-voice-command dual-path invoke");
+}
+
+console.log("\n>> [VALIDATE] B2 HackathonState provision");
+const provisionSrc = readFileSync(
+  join(fnDir, "provision-hackathon-state", "entry.ts"),
+  "utf8",
+);
+if (
+  !provisionSrc.includes("HackathonState.create") ||
+  !provisionSrc.includes("owner_id: user.id") ||
+  provisionSrc.includes("owner_id: opts") ||
+  provisionSrc.includes("owner_id: body")
+) {
+  fail("provision-hackathon-state must create with JWT owner_id only");
+} else {
+  ok("provision-hackathon-state JWT owner_id");
+}
+const ensureSrc = readFileSync(
+  join(ROOT, "src/lib/ensureHackathonState.ts"),
+  "utf8",
+);
+if (!ensureSrc.includes("provision-hackathon-state")) {
+  fail("ensureHackathonState must invoke provision-hackathon-state");
+} else {
+  ok("ensureHackathonState Edge provision");
 }
 
 console.log("\n>> [VALIDATE] Frontend F0 tokens");

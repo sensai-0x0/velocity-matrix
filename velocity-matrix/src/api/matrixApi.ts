@@ -7,6 +7,8 @@ import { getOrCreateSessionId } from "@/lib/ensureHackathonState";
 import type {
   ExecutionPayload,
   ExecutionResult,
+  ProvisionHackathonStatePayload,
+  ProvisionHackathonStateResult,
   VoiceIngestionPayload,
   VoiceIngestionResponse,
 } from "@/contracts/data_contracts";
@@ -34,6 +36,17 @@ export function buildVoiceIngestionPayload(
     urgency_flag:
       options?.urgencyFlag ?? URGENT_RE.test(trimmed),
   };
+}
+
+/** B2 — provision Solo-Cell HackathonState (idempotent) */
+export async function provisionHackathonState(
+  payload: ProvisionHackathonStatePayload = {},
+): Promise<ProvisionHackathonStateResult> {
+  const result = await base44.functions.invoke(
+    "provision-hackathon-state",
+    payload,
+  );
+  return unwrapInvoke<ProvisionHackathonStateResult>(result);
 }
 
 /** Node 01 — process-voice-command */

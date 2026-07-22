@@ -1,0 +1,5 @@
+// B2 — first-login Solo-Cell seed (invoked from UI after auth.me).
+{
+  "name": "provision-hackathon-state",
+  "entry": "entry.ts"
+}

@@ -87,3 +87,26 @@ export interface ExecutionResult {
   deployment_url?: string;
   error_trace?: string;       // Displayed in Bio-Crimson (#E11D48) if the commit fails
 }
+
+## ProvisionHackathonStatePayload (UI → `provision-hackathon-state`)
+
+Optional onboarding fields. `owner_id` is never accepted from the client.
+
+```typescript
+interface ProvisionHackathonStatePayload {
+  session_id?: string;
+  current_focus_area?: string;
+  target_repo_url?: string;
+}
+```
+
+## ProvisionHackathonStateResult (Edge → UI)
+
+```typescript
+interface ProvisionHackathonStateResult {
+  status: "created" | "exists" | "rejected";
+  state_id: string;
+  session_id: string;
+  error_trace?: string;
+}
+```

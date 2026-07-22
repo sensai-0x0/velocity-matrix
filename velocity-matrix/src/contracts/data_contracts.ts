@@ -65,6 +65,22 @@ export interface ExecutionResult {
   error_trace?: string;
 }
 
+
+/** UI -> Base44: provision-hackathon-state (optional onboarding fields) */
+export interface ProvisionHackathonStatePayload {
+  session_id?: string;
+  current_focus_area?: string;
+  target_repo_url?: string;
+}
+
+/** Base44 -> UI: Solo-Cell seed result */
+export interface ProvisionHackathonStateResult {
+  status: "created" | "exists" | "rejected";
+  state_id: string;
+  session_id: string;
+  error_trace?: string;
+}
+
 /** Synthesis status enum shared with entity schema */
 export type SynthesisStatus = SynthesisStateStream["status"];
 
