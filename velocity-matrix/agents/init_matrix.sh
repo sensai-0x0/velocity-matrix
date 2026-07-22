@@ -30,6 +30,7 @@ mkdir -p \
   base44/functions/process-voice-command \
   base44/functions/synthesize-solution \
   base44/functions/execute-resolution \
+  base44/functions/provision-hackathon-state \
   base44/connectors \
   base44/shared \
   src/contracts
@@ -65,6 +66,9 @@ REQUIRED=(
   "base44/functions/process-voice-command/entry.ts"
   "base44/functions/synthesize-solution/entry.ts"
   "base44/functions/execute-resolution/entry.ts"
+  "base44/functions/provision-hackathon-state/entry.ts"
+  "base44/shared/llm.ts"
+  "base44/shared/ingest.ts"
   "src/contracts/data_contracts.ts"
 )
 
@@ -102,7 +106,7 @@ EOF
 fi
 
 # Ensure connector keys exist even on older .env files
-for key in GITHUB_PAT LLM_API_KEY SLACK_BOT_TOKEN SLACK_CHANNEL_ID; do
+for key in GITHUB_PAT LLM_API_KEY SLACK_BOT_TOKEN SLACK_CHANNEL_ID VITE_BASE44_APP_ID; do
   if ! grep -q "^${key}=" .env 2>/dev/null; then
     echo "${key}=" >> .env
     echo ">> [SYSTEM] Appended missing ${key} to .env"

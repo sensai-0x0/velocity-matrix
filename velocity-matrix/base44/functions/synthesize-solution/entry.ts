@@ -1,13 +1,22 @@
 /**
- * Node 02 — Synthesis Grid
+ * Node 02 — Synthesis Grid (B4 hardened).
  * Trigger: ActiveBlockers INSERT webhook (or manual invoke with blocker_id).
  * Streams SynthesisStateStream fields, writes ResolutionArtifact to GeneratedSolutions.
+ *
+ * Degraded retry policy (B4): on LLM_TIMEOUT / 429 leave is_resolved:false +
+ * current_focus "Queued for retry". Re-invoke is client/manual or dual-path
+ * re-fire — no JobStatus entity; no fourth table.
+ * Terminal success: is_resolved:true + completion_percentage:100 (UI keys off these).
  */
 import { createClientFromRequest } from "npm:@base44/sdk";
 import type {
   ResolutionArtifact,
   SynthesisStatus,
 } from "../../shared/contracts.ts";
+import {
+  parseLlmResponse,
+  type LlmSolution,
+} from "../../shared/llm.ts";
 
 /** Manual invoke, entity automation, or nested connector-style payload */
 interface WebhookPayload {
@@ -21,14 +30,6 @@ interface WebhookPayload {
   };
 }
 
-interface LlmSolution {
-  parsed_issue: string;
-  solution_type: ResolutionArtifact["solution_type"];
-  language: string;
-  code: string;
-  file_path?: string;
-  neural_summary: string;
-}
 
 const LLM_TIMEOUT_MS = 15_000;
 
@@ -85,15 +86,35 @@ async function streamStatus(
   });
 }
 
-/** Parse InvokeLLM structured or string response into LlmSolution */
-function parseLlmResponse(raw: unknown): LlmSolution {
-  if (typeof raw === "object" && raw !== null) {
-    return raw as LlmSolution;
+
+/**
+ * Prefer llm_reasoning_core connector when the SDK exposes it;
+ * fall back to Core.InvokeLLM (scaffold default).
+ */
+async function invokeReasoningCore(
+  // deno-lint-ignore no-explicit-any
+  base44: any,
+  prompt: string,
+): Promise<unknown> {
+  try {
+    const connector = base44.connectors?.llm_reasoning_core;
+    if (connector && typeof connector.invoke === "function") {
+      return await connector.invoke({
+        prompt,
+        response_json_schema: RESPONSE_SCHEMA,
+      });
+    }
+  } catch (err) {
+    console.warn(
+      "[synthesize-solution] llm_reasoning_core connector failed — Core.InvokeLLM fallback",
+      err,
+    );
   }
-  if (typeof raw === "string") {
-    return JSON.parse(raw) as LlmSolution;
-  }
-  throw new Error("Unexpected LLM response shape");
+
+  return await base44.integrations.Core.InvokeLLM({
+    prompt,
+    response_json_schema: RESPONSE_SCHEMA,
+  });
 }
 
 Deno.serve(async (req) => {
@@ -123,11 +144,25 @@ Deno.serve(async (req) => {
     // Idempotency: dual-path (automation + Node 01 invoke) must not double-synthesize
     const status = blocker.status as string | undefined;
     const pct = Number(blocker.completion_percentage ?? 0);
-    if (status && status !== "parsing_intent" && pct > 0) {
+    if (blocker.is_resolved === true && pct >= 100) {
       return Response.json(
-        { status: "skipped", message: "synthesis already in progress or complete" },
+        { status: "skipped", message: "blocker already resolved" },
         { status: 200 },
       );
+    }
+    if (status && status !== "parsing_intent" && pct > 0 && pct < 100) {
+      // Allow re-entry when degraded (Queued for retry) — pct may be mid-flight
+      const focus = String(blocker.current_focus ?? "");
+      const degraded = /queued for retry/i.test(focus);
+      if (!degraded) {
+        return Response.json(
+          {
+            status: "skipped",
+            message: "synthesis already in progress or complete",
+          },
+          { status: 200 },
+        );
+      }
     }
 
     const existingSolutions = await base44.entities.GeneratedSolutions.filter({
@@ -177,10 +212,7 @@ Return a strict JSON object matching the schema with:
 - neural_summary: short UI blurb
 `.trim();
 
-    const llmCall = base44.integrations.Core.InvokeLLM({
-      prompt: systemPrompt,
-      response_json_schema: RESPONSE_SCHEMA,
-    });
+    const llmCall = invokeReasoningCore(base44, systemPrompt);
 
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("LLM_TIMEOUT")), LLM_TIMEOUT_MS),
@@ -197,11 +229,17 @@ Return a strict JSON object matching the schema with:
         await base44.entities.ActiveBlockers.update(blockerId, {
           parsed_issue: `Degraded: ${message}`,
           is_resolved: false,
+          completion_percentage: Number(blocker.completion_percentage ?? 55),
           current_focus: "Queued for retry",
           latency_ms: Date.now() - startedAt,
         });
+        // Client/manual retry: re-invoke synthesize-solution with same blocker_id
         return Response.json(
-          { status: "degraded", message },
+          {
+            status: "degraded",
+            message,
+            retry: "reinvoke_synthesize_solution",
+          },
           { status: 200 },
         );
       }
@@ -228,8 +266,10 @@ Return a strict JSON object matching the schema with:
       neural_summary: solution.neural_summary,
       available_actions: ["deploy", "override", "discard"],
       has_been_committed: false,
+      is_discarded: false,
     });
 
+    // Terminal success — UI watches is_resolved + completion_percentage:100
     await base44.entities.ActiveBlockers.update(blockerId, {
       parsed_issue: solution.parsed_issue,
       status: "verifying_syntax",

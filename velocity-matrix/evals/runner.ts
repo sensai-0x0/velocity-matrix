@@ -11,8 +11,9 @@ import type { EvalResult, EvalSuite } from "./harness";
 import { ingestionSuite } from "./ingestion.eval";
 import { synthesisSuite } from "./synthesis.eval";
 import { executionSuite } from "./execution.eval";
+import { securitySuite } from "./security.eval";
 
-const SUITES: EvalSuite[] = [ingestionSuite, synthesisSuite, executionSuite];
+const SUITES: EvalSuite[] = [ingestionSuite, synthesisSuite, executionSuite, securitySuite];
 
 /** ANSI colour helpers for the terminal report (green pass / crimson fail). */
 const c = {

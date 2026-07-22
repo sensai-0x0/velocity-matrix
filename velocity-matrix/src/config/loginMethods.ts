@@ -21,7 +21,7 @@ export const LOGIN_METHODS: LoginMethods = {
   microsoft: false,
   facebook: false,
   apple: false,
-  sso: false,
+  sso: true, // B0: GitHub Solo-Cell via Base44 Enterprise SSO
 };
 
 /** Human labels for text-string affordances */

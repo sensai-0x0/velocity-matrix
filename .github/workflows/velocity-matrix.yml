@@ -1,0 +1,33 @@
+# B6 — Velocity Matrix validate + AI evals gate
+name: Velocity Matrix
+
+on:
+  push:
+    paths:
+      - "velocity-matrix/**"
+      - ".github/workflows/velocity-matrix.yml"
+  pull_request:
+    paths:
+      - "velocity-matrix/**"
+      - ".github/workflows/velocity-matrix.yml"
+
+defaults:
+  run:
+    working-directory: velocity-matrix
+
+jobs:
+  validate-evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install
+        run: bun install
+      - name: Validate + typecheck
+        run: bun run validate
+      - name: Unit tests
+        run: bun test
+      - name: AI evals gate
+        run: bun run evals:run

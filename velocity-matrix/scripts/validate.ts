@@ -422,6 +422,66 @@ if (!solutionsEntity.includes("is_discarded")) {
   ok("GeneratedSolutions.is_discarded");
 }
 
+console.log("\n>> [VALIDATE] B0 deploy prerequisites");
+for (const rel of [
+  "scripts/deploy-gate.ts",
+  "base44/shared/llm.ts",
+  "evals/security.eval.ts",
+]) {
+  if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
+  else ok(rel);
+}
+const loginMethods = readFileSync(
+  join(ROOT, "src/config/loginMethods.ts"),
+  "utf8",
+);
+if (!loginMethods.includes("sso: true")) {
+  fail("loginMethods.sso must be true for GitHub Solo-Cell (B0)");
+} else {
+  ok("loginMethods SSO enabled");
+}
+const envEx = readFileSync(join(ROOT, ".env.example"), "utf8");
+if (!envEx.includes("VITE_BASE44_APP_ID=") || !envEx.includes("LLM_API_KEY=")) {
+  fail(".env.example incomplete for B0");
+} else {
+  ok(".env.example B0 keys");
+}
+
+console.log("\n>> [VALIDATE] B4 Node 02 synthesizer harden");
+const synthSrc = readFileSync(
+  join(fnDir, "synthesize-solution", "entry.ts"),
+  "utf8",
+);
+const llmSrc = readFileSync(join(ROOT, "base44/shared/llm.ts"), "utf8");
+if (!llmSrc.includes("parseLlmResponse") || !llmSrc.includes("solution_type")) {
+  fail("base44/shared/llm.ts missing parseLlmResponse");
+} else {
+  ok("shared llm parseLlmResponse");
+}
+if (
+  !synthSrc.includes("invokeReasoningCore") ||
+  !synthSrc.includes("Queued for retry") ||
+  !synthSrc.includes('from "../../shared/llm.ts"')
+) {
+  fail("synthesize-solution missing B4 connector/retry/parse wiring");
+} else {
+  ok("synthesize-solution B4 harden");
+}
+
+console.log("\n>> [VALIDATE] B6 security + evals gate");
+const runnerSrc = readFileSync(join(ROOT, "evals/runner.ts"), "utf8");
+if (!runnerSrc.includes("securitySuite")) {
+  fail("evals/runner.ts missing securitySuite");
+} else {
+  ok("evals runner includes securitySuite");
+}
+const pkgJson = readFileSync(join(ROOT, "package.json"), "utf8");
+if (!pkgJson.includes("deploy:gate") || !pkgJson.includes("evals:run")) {
+  fail("package.json missing deploy:gate / evals:run");
+} else {
+  ok("package.json deploy:gate + evals");
+}
+
 console.log("\n>> [VALIDATE] Frontend F0 tokens");
 const css = readFileSync(join(ROOT, "src/index.css"), "utf8");
 for (const token of ["--crimson:", "--crimson-dim:"]) {

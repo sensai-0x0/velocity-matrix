@@ -7,13 +7,16 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npx base44 deploy -y",
+    "deploy": "bun scripts/deploy-gate.ts --deploy",
     "types:generate": "npx base44 types generate",
     "typecheck": "tsc --noEmit",
     "validate": "bun scripts/validate.ts && bun run typecheck",
-    "test": "bun test src/cortex src/lib src/api",
+    "test": "bun test src/cortex src/lib src/api base44/shared",
     "evals:run": "bun evals/runner.ts",
-    "scaffold": "bash agents/init_matrix.sh"
+    "scaffold": "bash agents/init_matrix.sh",
+    "deploy:gate": "bun scripts/deploy-gate.ts",
+    "predeploy": "bun run validate && bun run evals:run",
+    "deploy:raw": "npx base44 deploy -y"
   },
   "dependencies": {
     "@base44/sdk": "latest",
