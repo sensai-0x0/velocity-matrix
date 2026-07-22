@@ -20,6 +20,11 @@
       "format": "uri",
       "description": "GitHub repo URL for connector routing (auth_design Rule C)"
     },
+    "target_branch": {
+      "type": "string",
+      "default": "main",
+      "description": "Git branch for github_auto_commit (B5; default main)"
+    },
     "last_active_timestamp": {
       "type": "number",
       "description": "Unix epoch ms for idle tracking"

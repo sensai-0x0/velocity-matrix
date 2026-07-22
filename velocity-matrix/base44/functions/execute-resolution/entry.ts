@@ -1,13 +1,17 @@
 /**
- * Node 03 — Resolution Feed Executor
+ * Node 03 — Resolution Feed Executor (B5).
  * Endpoint: execute-resolution
  * Gates on deploy/override, commits via GitHub connector, notifies Slack.
+ * cli_executor is explicitly rejected in v0.1 (GitHub-only).
  */
 import { createClientFromRequest } from "npm:@base44/sdk";
 import type {
   ExecutionPayload,
   ExecutionResult,
 } from "../../shared/contracts.ts";
+
+const CLI_DISABLED =
+  "cli_executor not enabled in v0.1 — use github_auto_commit";
 
 /** Validate ExecutionPayload shape */
 function isValidPayload(body: unknown): body is ExecutionPayload {
@@ -53,10 +57,21 @@ Deno.serve(async (req) => {
       return Response.json(result, { status: 200 });
     }
 
-    // Explicit discard — no connector call
+    // B5: cli_executor accepted in contract but not enabled in v0.1
+    if (body.target_connector === "cli_executor") {
+      const result: ExecutionResult = {
+        success: false,
+        error_trace: CLI_DISABLED,
+      };
+      return Response.json(result, { status: 200 });
+    }
+
+    // Explicit discard — soft-mark so UI can hide the node
     if (body.action_taken === "discard") {
       await base44.entities.GeneratedSolutions.update(body.artifact_id, {
         has_been_committed: false,
+        is_discarded: true,
+        available_actions: [],
       });
       const result: ExecutionResult = { success: true };
       return Response.json(result, { status: 200 });
@@ -85,8 +100,18 @@ Deno.serve(async (req) => {
       return Response.json(result, { status: 200 });
     }
 
+    if ((artifact as { is_discarded?: boolean }).is_discarded) {
+      const result: ExecutionResult = {
+        success: false,
+        error_trace: "Artifact was discarded — cannot deploy.",
+      };
+      return Response.json(result, { status: 200 });
+    }
+
     const states = await base44.entities.HackathonState.list();
-    const state = states[0] as { target_repo_url?: string } | undefined;
+    const state = states[0] as
+      | { target_repo_url?: string; target_branch?: string }
+      | undefined;
     const repoUrl = state?.target_repo_url;
     if (!repoUrl) {
       const result: ExecutionResult = {
@@ -105,6 +130,11 @@ Deno.serve(async (req) => {
       };
       return Response.json(result, { status: 200 });
     }
+
+    const branch =
+      (typeof state?.target_branch === "string" &&
+        state.target_branch.trim()) ||
+      "main";
 
     const code =
       body.action_taken === "override" && body.modified_code
@@ -148,7 +178,6 @@ Deno.serve(async (req) => {
       const apiUrl =
         `https://api.github.com/repos/${parsed.owner}/${parsed.repo}/contents/${contentPath}`;
 
-      // Fetch existing SHA if file exists (required for updates)
       let sha: string | undefined;
       const existing = await fetch(apiUrl, {
         headers: {
@@ -165,7 +194,7 @@ Deno.serve(async (req) => {
       const putBody: Record<string, string> = {
         message: commitMessage,
         content: btoa(unescape(encodeURIComponent(code))),
-        branch: "main",
+        branch,
       };
       if (sha) putBody.sha = sha;
 
@@ -197,7 +226,7 @@ Deno.serve(async (req) => {
         putJson.commit?.html_url ?? putJson.content?.html_url ?? repoUrl;
     }
 
-    // Optional Slack notify
+    // Optional Slack notify — non-fatal on failure
     const slackToken = Deno.env.get("SLACK_BOT_TOKEN");
     const slackChannel = Deno.env.get("SLACK_CHANNEL_ID");
     if (slackToken && slackChannel) {
@@ -218,12 +247,17 @@ Deno.serve(async (req) => {
       } catch (slackErr) {
         console.warn("[execute-resolution] slack notify failed", slackErr);
       }
+    } else if (slackToken && !slackChannel) {
+      console.warn(
+        "[execute-resolution] SLACK_BOT_TOKEN set without SLACK_CHANNEL_ID",
+      );
     }
 
     await base44.entities.GeneratedSolutions.update(body.artifact_id, {
       code,
       has_been_committed: true,
       deployment_url: deploymentUrl,
+      is_discarded: false,
     });
 
     const result: ExecutionResult = {

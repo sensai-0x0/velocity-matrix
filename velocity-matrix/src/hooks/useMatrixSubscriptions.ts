@@ -139,6 +139,14 @@ export function useMatrixSubscriptions({
         const row = { ...event.data, id: event.data?.id ?? event.id };
         setSolutions((prev) => upsertFront(prev, row, event.id));
 
+        // B5: discarded artifacts leave the active Resolution Feed
+        if (row.is_discarded) {
+          setLatestArtifact((prev) =>
+            prev?.artifact_id === (row.id ?? event.id) ? null : prev,
+          );
+          return;
+        }
+
         if (event.type === "create") {
           const artifact = toResolutionArtifact(
             row,

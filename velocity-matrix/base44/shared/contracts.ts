@@ -11,7 +11,8 @@ export interface VoiceIngestionPayload {
   timestamp_ms: number;
   transcript: string;
   context_tags?: string[];
-  urgency_flag: boolean;
+  /** Client may omit — Node 01 derives from transcript keywords (B3) */
+  urgency_flag?: boolean;
 }
 
 /** Base44 -> UI: voice command ack */

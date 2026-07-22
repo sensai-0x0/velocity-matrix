@@ -119,7 +119,7 @@ export function useVoiceIngest({
       const payload = buildVoiceIngestionPayload(transcript, {
         contextTags: deriveContextTags(transcript),
       });
-      setUrgency(payload.urgency_flag);
+      setUrgency(Boolean(payload.urgency_flag));
 
       const response = await processVoiceCommand(payload);
       if (response.status === "acknowledged" && response.blocker_id) {

@@ -356,6 +356,72 @@ if (!ensureSrc.includes("provision-hackathon-state")) {
   ok("ensureHackathonState Edge provision");
 }
 
+console.log("\n>> [VALIDATE] B3 Node 01 ingest harden");
+const ingestShared = readFileSync(join(ROOT, "base44/shared/ingest.ts"), "utf8");
+const voiceFn = readFileSync(
+  join(fnDir, "process-voice-command", "entry.ts"),
+  "utf8",
+);
+if (
+  !ingestShared.includes("deriveContextTags") ||
+  !ingestShared.includes("resolveUrgency")
+) {
+  fail("base44/shared/ingest.ts missing tag/urgency helpers");
+} else {
+  ok("base44/shared/ingest.ts");
+}
+if (
+  !voiceFn.includes("mergeContextTags") ||
+  !voiceFn.includes("resolveUrgency") ||
+  !voiceFn.includes("owner_id: user.id")
+) {
+  fail("process-voice-command missing B3 enrichment / JWT owner_id");
+} else {
+  ok("process-voice-command B3 enrichment");
+}
+if (voiceFn.includes("hacker_id:") && voiceFn.includes("owner_id: body")) {
+  fail("process-voice-command must not persist client hacker_id as owner");
+} else {
+  ok("process-voice-command ignores client hacker_id");
+}
+
+console.log("\n>> [VALIDATE] B5 Node 03 executor");
+const execFn = readFileSync(
+  join(fnDir, "execute-resolution", "entry.ts"),
+  "utf8",
+);
+if (
+  !execFn.includes("cli_executor not enabled in v0.1") ||
+  !execFn.includes('target_connector === "cli_executor"')
+) {
+  fail("execute-resolution missing explicit cli_executor reject");
+} else {
+  ok("execute-resolution cli_executor reject");
+}
+if (!execFn.includes("target_branch") || !execFn.includes("is_discarded")) {
+  fail("execute-resolution missing branch targeting / discard soft-mark");
+} else {
+  ok("execute-resolution branch + discard");
+}
+const hackathonEntity = readFileSync(
+  join(ROOT, "base44/entities/hackathon-state.jsonc"),
+  "utf8",
+);
+const solutionsEntity = readFileSync(
+  join(ROOT, "base44/entities/generated-solutions.jsonc"),
+  "utf8",
+);
+if (!hackathonEntity.includes("target_branch")) {
+  fail("HackathonState missing target_branch");
+} else {
+  ok("HackathonState.target_branch");
+}
+if (!solutionsEntity.includes("is_discarded")) {
+  fail("GeneratedSolutions missing is_discarded");
+} else {
+  ok("GeneratedSolutions.is_discarded");
+}
+
 console.log("\n>> [VALIDATE] Frontend F0 tokens");
 const css = readFileSync(join(ROOT, "src/index.css"), "utf8");
 for (const token of ["--crimson:", "--crimson-dim:"]) {

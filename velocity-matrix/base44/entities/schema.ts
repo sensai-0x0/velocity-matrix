@@ -10,6 +10,7 @@ export interface HackathonStateRecord {
   session_id: string;
   current_focus_area: string;
   target_repo_url?: string;
+  target_branch?: string;
   last_active_timestamp: number;
 }
 
@@ -47,6 +48,7 @@ export interface GeneratedSolutionsRecord {
   available_actions: Array<"deploy" | "override" | "discard">;
   has_been_committed: boolean;
   deployment_url?: string;
+  is_discarded?: boolean;
 }
 
 /** Fields required by SynthesisStateStream on ActiveBlockers */

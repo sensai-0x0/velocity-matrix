@@ -50,6 +50,11 @@
       "type": "string",
       "format": "uri",
       "description": "Commit or deploy URL from ExecutionResult"
+    },
+    "is_discarded": {
+      "type": "boolean",
+      "default": false,
+      "description": "True after Resolution Feed Discard — hide from active UI (B5)"
     }
   },
   "required": [

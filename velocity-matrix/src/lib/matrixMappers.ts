@@ -32,6 +32,7 @@ export interface GeneratedSolutionRow {
   available_actions?: ResolutionArtifact["available_actions"];
   has_been_committed?: boolean;
   deployment_url?: string;
+  is_discarded?: boolean;
   created_date?: string;
 }
 
