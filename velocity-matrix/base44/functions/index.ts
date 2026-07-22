@@ -1,5 +1,5 @@
 /**
- * Function index — Velocity Matrix synapses + auth provision.
+ * Function index — Velocity Matrix synapses + Phase 2.0 Co-Founder Expansion.
  * Deployable entrypoints live in sibling directories.
  */
 export const VELOCITY_MATRIX_FUNCTIONS = [
@@ -19,7 +19,7 @@ export const VELOCITY_MATRIX_FUNCTIONS = [
     name: "synthesize-solution",
     node: "02_synthesizer",
     path: "./synthesize-solution/entry.ts",
-    contract: "ActiveBlockers INSERT -> ResolutionArtifact",
+    contract: "ActiveBlockers INSERT -> ResolutionArtifact | SCOPE_WARNING",
     automation: "on_active_blocker_create (entity create)",
   },
   {
@@ -27,5 +27,17 @@ export const VELOCITY_MATRIX_FUNCTIONS = [
     node: "03_executor",
     path: "./execute-resolution/entry.ts",
     contract: "ExecutionPayload -> ExecutionResult",
+  },
+  {
+    name: "spawn-phantom-thread",
+    node: "03_executor_phantom",
+    path: "./spawn-phantom-thread/entry.ts",
+    contract: "PhantomThreadSpawnPayload -> PhantomThread result",
+  },
+  {
+    name: "build-architecture-graph",
+    node: "blueprint",
+    path: "./build-architecture-graph/entry.ts",
+    contract: "{ session_id?, force_refresh? } -> ArchitectureGraphPayload",
   },
 ] as const;

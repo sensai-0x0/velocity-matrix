@@ -53,3 +53,15 @@ Never bypass Row-Level Security unless executing an asynchronous background depl
 // REQUIRED PATTERN
 
 const db = base44.createClientFromRequest(req);
+
+
+---
+
+## Phase 2.0 — Co-Founder Expansion (develop)
+
+Additional synapses (see `base44/functions/index.ts`):
+
+* `spawn-phantom-thread` — Node 03 background fork; never merges to default branch without explicit `merge`
+* `build-architecture-graph` — AST/static map → `ArchitectureGraph` for Neural Blueprint UI
+
+Scope-Sniper grades prompts in `synthesize-solution` against `HackathonState.core_mvp_definition` + `countdown_deadline`.

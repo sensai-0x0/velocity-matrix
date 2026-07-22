@@ -18,6 +18,9 @@ export interface ActiveBlockerRow {
   current_focus?: string;
   latency_ms?: number;
   urgency_flag?: boolean;
+  assigned_agent?: string;
+  telemetry_event?: string;
+  scope_override?: boolean;
 }
 
 /** GeneratedSolutions row shape from Base44 realtime events */
@@ -34,6 +37,11 @@ export interface GeneratedSolutionRow {
   deployment_url?: string;
   is_discarded?: boolean;
   created_date?: string;
+  execution_mode?: "sync" | "phantom";
+  git_branch?: string;
+  merge_ready?: boolean;
+  eval_status?: "not_run" | "passing" | "failing";
+  telemetry_event?: string;
 }
 
 const SYNTHESIS_STATUSES: SynthesisStatus[] = [
@@ -79,6 +87,10 @@ export function toResolutionArtifact(
     },
     neural_summary: row.neural_summary ?? "",
     available_actions: row.available_actions ?? ["deploy", "override", "discard"],
+    ...(row.execution_mode ? { execution_mode: row.execution_mode } : {}),
+    ...(row.git_branch ? { git_branch: row.git_branch } : {}),
+    ...(row.merge_ready != null ? { merge_ready: row.merge_ready } : {}),
+    ...(row.eval_status ? { eval_status: row.eval_status } : {}),
   };
 }
 

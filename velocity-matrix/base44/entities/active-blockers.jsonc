@@ -64,6 +64,15 @@
       "type": "boolean",
       "default": false,
       "description": "True once a GeneratedSolutions row exists"
+    },
+    "scope_override": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when hacker overrides Scope-Sniper warning (Phase 2)"
+    },
+    "telemetry_event": {
+      "type": "string",
+      "description": "Last MatrixTelemetryEvent type for audio bridge"
     }
   },
   "required": [

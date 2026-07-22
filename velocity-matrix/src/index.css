@@ -613,6 +613,172 @@ body {
   font-size: 0.85rem;
 }
 
+.scope-interrupt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.phantom-pulse-wrap {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.phantom-pulse {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: var(--bio);
+  box-shadow: 0 0 12px var(--phantom-pulse);
+}
+
+.phantom-pulse-wrap[data-tone="compiling"] .phantom-pulse {
+  animation: phantom-pulse-anim 0.7s ease-in-out infinite;
+}
+
+.phantom-pulse-wrap[data-tone="running"] .phantom-pulse {
+  animation: phantom-pulse-anim 1.4s ease-in-out infinite;
+}
+
+.phantom-pulse-wrap[data-tone="complete"] .phantom-pulse {
+  background: var(--bio);
+  box-shadow: 0 0 18px var(--bio-glow);
+}
+
+.phantom-pulse-wrap[data-tone="failed"] .phantom-pulse {
+  background: var(--crimson);
+  box-shadow: 0 0 12px var(--crimson-dim);
+  animation: none;
+}
+
+@keyframes phantom-pulse-anim {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phantom-pulse-wrap[data-tone] .phantom-pulse {
+    animation: none;
+  }
+}
+
+.phantom-panel {
+  max-width: 16rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--void-elevated);
+  border: 1px solid var(--bio-dim);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.phantom-panel-title {
+  margin: 0 0 0.35rem;
+  color: var(--bio);
+}
+
+.phantom-panel-branch,
+.phantom-error {
+  margin: 0.25rem 0;
+}
+
+.phantom-error {
+  color: var(--crimson);
+}
+
+.phantom-steps {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phantom-steps li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  opacity: 0.85;
+}
+
+.phantom-merge-affordance {
+  margin: 0;
+}
+
+.mvp-setup {
+  display: grid;
+  gap: 0.65rem;
+  max-width: 28rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.mvp-setup-label {
+  margin: 0;
+  color: var(--bio-dim);
+}
+
+.mvp-setup-field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.mvp-setup-field textarea,
+.mvp-setup-field input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--bio-dim);
+  color: var(--text);
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+}
+
+.mvp-setup-msg {
+  margin: 0;
+  color: var(--bio);
+}
+
+.neural-blueprint {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.neural-blueprint-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.neural-blueprint-canvas {
+  width: 100%;
+  max-width: 56rem;
+  border: 1px solid var(--blueprint-edge);
+  background: var(--void);
+}
+
+.neural-blueprint-detail {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--bio);
+}
+
 /* F7: one composition on narrow viewports — brand + stage only */
 @media (max-width: 640px) {
   .cortex-root {

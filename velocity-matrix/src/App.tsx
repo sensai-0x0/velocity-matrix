@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MatrixVoiceWave } from "./components/MatrixVoiceWave";
 import { NeuralNode, neuralNodePropsFromArtifact } from "./components/NeuralNode";
 import { SynthesisSpinner } from "./components/SynthesisSpinner";
@@ -7,19 +7,28 @@ import { CortexMockControls } from "./components/CortexMockControls";
 import { MatrixDisconnectToast } from "./components/MatrixDisconnectToast";
 import { AmbientVoicePanel } from "./components/AmbientVoicePanel";
 import { MatrixHistoryPanel } from "./components/MatrixHistoryPanel";
-import { NeuralBlueprintStub } from "./components/NeuralBlueprintStub";
+import { NeuralBlueprintCanvas } from "./components/NeuralBlueprintCanvas";
 import { ScopeInterruptStrip } from "./components/ScopeInterruptStrip";
+import { PhantomPulse } from "./components/PhantomPulse";
+import { MvpDeadlineSetup } from "./components/MvpDeadlineSetup";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useCortexView } from "@/hooks/useCortexView";
 import { useMatrixSubscriptions } from "@/hooks/useMatrixSubscriptions";
+import { usePhantomThreads } from "@/hooks/usePhantomThreads";
 import { useVoiceIngest } from "@/hooks/useVoiceIngest";
 import { useResolutionActions } from "@/hooks/useResolutionActions";
 import { isDegradedBlocker, isFailedBlocker } from "@/lib/matrixMappers";
 import { base44 } from "@/api/base44Client";
+import { buildArchitectureGraph, executeArtifactAction, getOrCreateSessionId } from "@/api/matrixApi";
+import type { ArchitectureGraphPayload } from "@/contracts/data_contracts";
+import {
+  isTactileMuted,
+  setTactileMuted,
+  unlockTactileAudio,
+} from "@/audio/tactileTelemetry";
 
 /**
- * React application root — Neuropunk Cortex surface.
- * F7 + Phase 2 shell hooks (blueprint view, scope interrupt strip).
+ * React application root — Neuropunk Cortex + Phase 2.0 Co-Founder Expansion.
  */
 export default function App() {
   const { status, user, error, refresh, logout } = useAuthSession();
@@ -37,8 +46,8 @@ export default function App() {
     activeBlockerId: context.activeBlockerId,
     dispatch,
   });
+  const phantomThreads = usePhantomThreads(authenticated);
 
-  // Listen on all unlocked views; only Ambient submits ingest payloads
   const voice = useVoiceIngest({
     enabled: authenticated && view !== "locked",
     allowIngest: view === "ambient",
@@ -48,6 +57,10 @@ export default function App() {
     artifactId: context.activeArtifactId ?? latestArtifact?.artifact_id ?? null,
     dispatch,
   });
+
+  const [graph, setGraph] = useState<ArchitectureGraphPayload | null>(null);
+  const [graphBusy, setGraphBusy] = useState(false);
+  const [audioMuted, setAudioMuted] = useState(isTactileMuted);
 
   const artifactId = latestArtifact?.artifact_id ?? null;
   useEffect(() => {
@@ -64,6 +77,32 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [view, dispatch]);
 
+  useEffect(() => {
+    if (!authenticated) return;
+    const unlock = () => unlockTactileAudio();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, [authenticated]);
+
+  const refreshGraph = useCallback(async () => {
+    setGraphBusy(true);
+    try {
+      const result = await buildArchitectureGraph({
+        session_id: getOrCreateSessionId(),
+        force_refresh: true,
+      });
+      if (result.graph) setGraph(result.graph);
+    } catch (err) {
+      console.warn("[App] architecture graph refresh failed", err);
+    } finally {
+      setGraphBusy(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (view === "blueprint" && !graph) void refreshGraph();
+  }, [view, graph, refreshGraph]);
+
   const activeBlocker =
     blockers.find((b) => b.id === context.activeBlockerId) ?? blockers[0];
   const degraded = isDegradedBlocker(activeBlocker);
@@ -78,12 +117,29 @@ export default function App() {
       ? '>> VOICE · "Cancel that" · "Show matrix history"'
       : null;
 
+  const mergeReadyArtifact =
+    latestArtifact?.merge_ready && latestArtifact.execution_mode === "phantom"
+      ? latestArtifact
+      : null;
+  const mergeReadyRow = solutions.find(
+    (s) => s.merge_ready && s.execution_mode === "phantom" && !s.is_discarded,
+  );
+  const mergeTarget = mergeReadyArtifact
+    ? {
+        id: mergeReadyArtifact.artifact_id,
+        branch: mergeReadyArtifact.git_branch,
+      }
+    : mergeReadyRow?.id
+      ? { id: mergeReadyRow.id, branch: mergeReadyRow.git_branch }
+      : null;
+
   return (
     <main
       className="cortex-root"
       data-sdk-ready={sdkReady}
       data-cortex={view}
       data-auth={status}
+      onPointerDown={() => unlockTactileAudio()}
     >
       <header className="cortex-brand">
         <h1>Velocity Matrix</h1>
@@ -91,6 +147,17 @@ export default function App() {
         {authenticated && user && (
           <p className="cortex-session">
             <span>{user.email}</span>
+            <button
+              type="button"
+              className="auth-affordance auth-affordance-inline"
+              onClick={() => {
+                const next = !audioMuted;
+                setTactileMuted(next);
+                setAudioMuted(next);
+              }}
+            >
+              {audioMuted ? "[ Audio: off ]" : "[ Audio: on ]"}
+            </button>
             <button
               type="button"
               className="auth-affordance auth-affordance-inline"
@@ -102,10 +169,25 @@ export default function App() {
         )}
       </header>
 
+      {authenticated && <PhantomPulse threads={phantomThreads} />}
+
       {context.scopeInterrupt && (
         <ScopeInterruptStrip
           interrupt={context.scopeInterrupt}
           onDismiss={() => dispatch({ type: "DISMISS_SCOPE_WARNING" })}
+          onOverride={() => {
+            dispatch({ type: "DISMISS_SCOPE_WARNING" });
+            void voice.submitText(
+              `${activeBlocker?.raw_transcript ?? "continue"} — scope override build anyway`,
+            );
+          }}
+          onUseShortcut={() => {
+            const tag = context.scopeInterrupt?.shortcutSuggestion ?? "";
+            dispatch({ type: "DISMISS_SCOPE_WARNING" });
+            void voice.submitText(
+              `Use Base44 shortcut instead: ${tag}`,
+            );
+          }}
         />
       )}
 
@@ -129,6 +211,10 @@ export default function App() {
         )}
 
         {view === "ambient" && <AmbientVoicePanel voice={voice} />}
+
+        {view === "ambient" && authenticated && (
+          <MvpDeadlineSetup visible />
+        )}
 
         {authorityHint && (
           <p className="cortex-authority-hint" role="status">
@@ -189,6 +275,20 @@ export default function App() {
           />
         )}
 
+        {view === "ambient" && mergeTarget && (
+          <p className="phantom-merge-affordance" role="status">
+            <button
+              type="button"
+              className="auth-affordance auth-affordance-inline"
+              onClick={() => {
+                void executeArtifactAction(mergeTarget.id, "merge");
+              }}
+            >
+              {`[ Merge ${mergeTarget.branch ?? "phantom branch"} ]`}
+            </button>
+          </p>
+        )}
+
         {view === "history" && (
           <MatrixHistoryPanel
             blockers={blockers}
@@ -198,7 +298,10 @@ export default function App() {
         )}
 
         {view === "blueprint" && (
-          <NeuralBlueprintStub
+          <NeuralBlueprintCanvas
+            graph={graph}
+            busy={graphBusy}
+            onRefresh={() => void refreshGraph()}
             onExit={() => dispatch({ type: "HIDE_BLUEPRINT" })}
           />
         )}

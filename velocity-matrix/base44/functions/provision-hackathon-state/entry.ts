@@ -27,6 +27,21 @@ function parseBody(raw: unknown): ProvisionHackathonStatePayload {
   if (typeof b.target_repo_url === "string" && b.target_repo_url.length > 0) {
     out.target_repo_url = b.target_repo_url;
   }
+  if (
+    typeof b.countdown_deadline === "number" &&
+    Number.isFinite(b.countdown_deadline)
+  ) {
+    out.countdown_deadline = b.countdown_deadline;
+  }
+  if (
+    typeof b.core_mvp_definition === "string" &&
+    b.core_mvp_definition.length > 0
+  ) {
+    out.core_mvp_definition = b.core_mvp_definition;
+  }
+  if (b.scope_mode === "strict" || b.scope_mode === "advisory") {
+    out.scope_mode = b.scope_mode;
+  }
   return out;
 }
 
@@ -70,6 +85,21 @@ Deno.serve(async (req) => {
             ...(opts.current_focus_area
               ? { current_focus_area: opts.current_focus_area }
               : {}),
+            ...(opts.countdown_deadline != null
+              ? { countdown_deadline: opts.countdown_deadline }
+              : {}),
+            ...(opts.core_mvp_definition
+              ? { core_mvp_definition: opts.core_mvp_definition }
+              : {}),
+            ...(opts.scope_mode ? { scope_mode: opts.scope_mode } : {}),
+            ...(opts.countdown_deadline != null
+              ? {
+                  hours_remaining_cache: Math.max(
+                    0,
+                    (opts.countdown_deadline - Date.now()) / 3_600_000,
+                  ),
+                }
+              : {}),
           });
         } catch (err) {
           console.warn("[provision-hackathon-state] touch failed", err);
@@ -94,8 +124,21 @@ Deno.serve(async (req) => {
       session_id: sessionId,
       current_focus_area: opts.current_focus_area ?? DEFAULT_FOCUS,
       last_active_timestamp: Date.now(),
+      scope_mode: opts.scope_mode ?? "advisory",
       ...(opts.target_repo_url
         ? { target_repo_url: opts.target_repo_url }
+        : {}),
+      ...(opts.countdown_deadline != null
+        ? {
+            countdown_deadline: opts.countdown_deadline,
+            hours_remaining_cache: Math.max(
+              0,
+              (opts.countdown_deadline - Date.now()) / 3_600_000,
+            ),
+          }
+        : {}),
+      ...(opts.core_mvp_definition
+        ? { core_mvp_definition: opts.core_mvp_definition }
         : {}),
     });
 

@@ -97,4 +97,16 @@ describe("reduceCortex", () => {
     ctx = reduceCortex(ctx, { type: "DISMISS_SCOPE_WARNING" });
     expect(ctx.scopeInterrupt).toBeNull();
   });
+
+
+  test("phantom ingest stays on ambient", () => {
+    let ctx = reduceCortex(INITIAL_CORTEX_CONTEXT, { type: "AUTH_OK" });
+    ctx = reduceCortex(ctx, {
+      type: "INGEST_ACKNOWLEDGED",
+      blockerId: "ph1",
+      execution: "phantom",
+    });
+    expect(ctx.view).toBe("ambient");
+    expect(ctx.activeBlockerId).toBe("ph1");
+  });
 });

@@ -16,7 +16,7 @@ export type CortexEvent =
   | { type: "AUTH_OK" }
   | { type: "AUTH_LOST" }
   | { type: "AUTH_LOADING" }
-  | { type: "INGEST_ACKNOWLEDGED"; blockerId: string }
+  | { type: "INGEST_ACKNOWLEDGED"; blockerId: string; execution?: "sync" | "phantom" | "map" }
   | { type: "ARTIFACT_CREATED"; artifactId: string; blockerId?: string }
   | { type: "CANCEL" }
   | { type: "SHOW_HISTORY" }
@@ -98,6 +98,20 @@ export function reduceCortex(
 
     case "INGEST_ACKNOWLEDGED":
       if (ctx.view === "locked") return ctx;
+      // Phantom / neural-map — keep focal feed (FE-1.1)
+      if (event.execution === "phantom") {
+        return {
+          ...ctx,
+          activeBlockerId: event.blockerId || ctx.activeBlockerId,
+        };
+      }
+      if (event.execution === "map") {
+        return {
+          ...ctx,
+          view: "blueprint",
+          historyReturnView: asRestorable(ctx.view) ?? ctx.historyReturnView,
+        };
+      }
       return {
         ...ctx,
         view: "synthesis",

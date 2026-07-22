@@ -94,42 +94,38 @@ FE-0 Contracts + design tokens
 **Depends on:** `FE-0`, backend `BE-1` (subscribe to `PhantomThreads` + merge-ready solutions).  
 **Backend unlock:** `BE-1`.
 
-### [ ] FE-1.1 — Voice / UI trigger copy for spawn
+### [x] FE-1.1 — Voice / UI trigger copy for spawn
 
 - **Scope:** When transcript matches phantom intent (or backend returns phantom assignment), show micro-ack in cortex (“Phantom Thread queued…”) then return focus to current UI work — do not force Synthesis full-screen for background jobs.
 - **Acceptance Criteria:**
-  - [ ] Sync blockers still use Synthesis Grid
-  - [ ] Phantom path does not steal focal code feed
-- **Completed:**
-
-### [ ] FE-1.2 — `<PhantomPulse />` corner indicator
+  - [x] Sync blockers still use Synthesis Grid
+  - [x] Phantom path does not steal focal code feed
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-1.2 — `<PhantomPulse />` corner indicator
 
 - **Scope:** New component — subtle pulsing bioluminescent dot/ring in a screen corner.
   - Subscribes to `PhantomThreads` for `owner` session
   - Maps `status`: `running`/`compiling` → pulse speed; `complete` → solid bio flash then idle; `failed` → crimson
 - **Acceptance Criteria:**
-  - [ ] Visible without reading logs
-  - [ ] Click/focus opens minimal thread step list (not a dashboard card wall)
-  - [ ] Unsubscribes on unmount
-- **Completed:**
-
-### [ ] FE-1.3 — Thread step micro-panel
+  - [x] Visible without reading logs
+  - [x] Click/focus opens minimal thread step list (not a dashboard card wall)
+  - [x] Unsubscribes on unmount
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-1.3 — Thread step micro-panel
 
 - **Scope:** Peripheral panel listing `steps[]` labels + status; low information density; dismissible.
 - **Acceptance Criteria:**
-  - [ ] Updates live via subscription
-  - [ ] Shows `git_branch` when present
-- **Completed:**
-
-### [ ] FE-1.4 — 1-click merge affordance on Resolution Feed
+  - [x] Updates live via subscription
+  - [x] Shows `git_branch` when present
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-1.4 — 1-click merge affordance on Resolution Feed
 
 - **Scope:** When `GeneratedSolutions.merge_ready === true`, show text affordance `[ Merge phantom/<branch> ]` calling `execute-resolution` / `merge-phantom-branch` with `action_taken: 'merge'`.
 - **Acceptance Criteria:**
-  - [ ] No auto-merge
-  - [ ] Success shows deployment/PR URL; failure shows bio-crimson `error_trace`
-  - [ ] Discard/abandon path available
-- **Completed:**
-
+  - [x] No auto-merge
+  - [x] Success shows deployment/PR URL; failure shows bio-crimson `error_trace`
+  - [x] Discard/abandon path available
+- **Completed:** 2026-07-22 · agent:cursor
 **Parent complete when:** all FE-1.* `[x]`
 
 ---
@@ -140,31 +136,28 @@ FE-0 Contracts + design tokens
 **Depends on:** `FE-0`, backend `BE-2`.  
 **Backend unlock:** `BE-2`.
 
-### [ ] FE-2.1 — Subscribe / handle `SCOPE_WARNING`
+### [x] FE-2.1 — Subscribe / handle `SCOPE_WARNING`
 
 - **Scope:** On scope grade warning payload, interrupt cortex with copy pattern:
   - “Warning: High-friction request detected. You have {N} hours remaining. Recommending: {shortcut}.”
 - **Acceptance Criteria:**
-  - [ ] Hours derived from `countdown_deadline` (client display ok if server sends `hours_remaining`)
-  - [ ] Does not permanently block voice; offers `[ Use shortcut ]` / `[ Override — build anyway ]`
-- **Completed:**
-
-### [ ] FE-2.2 — MVP + deadline setup micro-flow
+  - [x] Hours derived from `countdown_deadline` (client display ok if server sends `hours_remaining`)
+  - [x] Does not permanently block voice; offers `[ Use shortcut ]` / `[ Override — build anyway ]`
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-2.2 — MVP + deadline setup micro-flow
 
 - **Scope:** First-run or voice-driven capture UI for `core_mvp_definition` + `countdown_deadline` (minimal text entry / confirm from transcript). Surface remaining time as quiet peripheral readout — not a hero countdown widget cluster.
 - **Acceptance Criteria:**
-  - [ ] Values persist via HackathonState update API/function
-  - [ ] Empty MVP → Scope-Sniper stays dormant (no false warnings)
-- **Completed:**
-
-### [ ] FE-2.3 — Override & shortcut actions
+  - [x] Values persist via HackathonState update API/function
+  - [x] Empty MVP → Scope-Sniper stays dormant (no false warnings)
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-2.3 — Override & shortcut actions
 
 - **Scope:** Wire buttons to continue synthesis with `scope_override` or accept shortcut suggestion (pre-fill next voice/context tag).
 - **Acceptance Criteria:**
-  - [ ] Override reaches backend
-  - [ ] Shortcut path reduces to recommended Base44 pattern in next payload `context_tags`
-- **Completed:**
-
+  - [x] Override reaches backend
+  - [x] Shortcut path reduces to recommended Base44 pattern in next payload `context_tags`
+- **Completed:** 2026-07-22 · agent:cursor
 **Parent complete when:** all FE-2.* `[x]`
 
 ---
@@ -175,41 +168,37 @@ FE-0 Contracts + design tokens
 **Depends on:** `FE-0.3`, backend `BE-3`.  
 **Backend unlock:** `BE-3`.
 
-### [ ] FE-3.1 — Blueprint view activation
+### [x] FE-3.1 — Blueprint view activation
 
 - **Scope:** On voice/backend signal (or command palette text), switch shell to `blueprint`; hide Resolution code feed; show graph canvas full-bleed in the void.
 - **Acceptance Criteria:**
-  - [ ] Exit via voice (“show code feed”) or `[ Esc ]` / text affordance
-  - [ ] No card chrome; nodes are geometric points/lines only
-- **Completed:**
-
-### [ ] FE-3.2 — `<NeuralBlueprintCanvas />` (lightweight WebGL / Canvas)
+  - [x] Exit via voice (“show code feed”) or `[ Esc ]` / text affordance
+  - [x] No card chrome; nodes are geometric points/lines only
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-3.2 — `<NeuralBlueprintCanvas />` (lightweight WebGL / Canvas)
 
 - **Scope:** Render `ArchitectureGraphPayload` nodes + edges.
   - Prefer lightweight WebGL (e.g. regl / raw WebGL / thin lib) — avoid heavy dashboard graph suites unless already in repo
   - Pan/zoom lightly; click node → peripheral detail (label, kind, related edges)
 - **Acceptance Criteria:**
-  - [ ] Handles empty / partial graphs
-  - [ ] 60fps target on typical laptop for ≤ ~200 nodes
-  - [ ] Subscribes to `ArchitectureGraph` for live refresh
-- **Completed:**
-
-### [ ] FE-3.3 — Trace mode for bug hunting
+  - [x] Handles empty / partial graphs
+  - [x] 60fps target on typical laptop for ≤ ~200 nodes
+  - [x] Subscribes to `ArchitectureGraph` for live refresh
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-3.3 — Trace mode for bug hunting
 
 - **Scope:** Selecting a Deno function node highlights transitive edges to entities / RLS policies (visual “trace”) to replace log-reading for data-flow bugs.
 - **Acceptance Criteria:**
-  - [ ] Highlight uses bio glow; non-path dims
-  - [ ] Works offline on last snapshot if refresh fails
-- **Completed:**
-
-### [ ] FE-3.4 — Trigger rebuild from UI
+  - [x] Highlight uses bio glow; non-path dims
+  - [x] Works offline on last snapshot if refresh fails
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-3.4 — Trigger rebuild from UI
 
 - **Scope:** Text affordance `[ Refresh neural map ]` invokes `build-architecture-graph`.
 - **Acceptance Criteria:**
-  - [ ] Shows quiet synthesizing state without leaving blueprint
-  - [ ] Errors surface as crimson micro-text + `MATRIX_DENIED` audio if wired
-- **Completed:**
-
+  - [x] Shows quiet synthesizing state without leaving blueprint
+  - [x] Errors surface as crimson micro-text + `MATRIX_DENIED` audio if wired
+- **Completed:** 2026-07-22 · agent:cursor
 **Parent complete when:** all FE-3.* `[x]`
 
 ---
@@ -220,18 +209,17 @@ FE-0 Contracts + design tokens
 **Depends on:** `FE-0.1`, backend `BE-4` event names.  
 **Backend unlock:** `BE-4`.
 
-### [ ] FE-4.1 — `<TactileTelemetry />` audio engine
+### [x] FE-4.1 — `<TactileTelemetry />` audio engine
 
 - **Scope:** Module that:
   - Preloads small AudioBuffers (synth hum, mechanical click, dissonant chirp)
   - Exposes `play(eventType: MatrixTelemetryEvent['type'])`
   - Respects user mute + `prefers-reduced-motion` / reduced-sound preference
 - **Acceptance Criteria:**
-  - [ ] No autoplay violation: unlock AudioContext on first user gesture (auth or mic allow)
-  - [ ] Buffers local assets under e.g. `src/audio/`
-- **Completed:**
-
-### [ ] FE-4.2 — Event → sound map
+  - [x] No autoplay violation: unlock AudioContext on first user gesture (auth or mic allow)
+  - [x] Buffers local assets under e.g. `src/audio/`
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-4.2 — Event → sound map
 
 - **Scope:** Wire map (initial):
 
@@ -244,18 +232,16 @@ FE-0 Contracts + design tokens
   | `BRANCH_READY` | soft bio chime |
 
 - **Acceptance Criteria:**
-  - [ ] Driven only by typed event strings — not free-text log scraping
-  - [ ] Hum stops on complete/fail
-- **Completed:**
-
-### [ ] FE-4.3 — Subscription bridge
+  - [x] Driven only by typed event strings — not free-text log scraping
+  - [x] Hum stops on complete/fail
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-4.3 — Subscription bridge
 
 - **Scope:** From existing entity subscriptions (`ActiveBlockers`, `PhantomThreads`, `GeneratedSolutions`), read `telemetry_event` (or dedicated events) and call `play()`.
 - **Acceptance Criteria:**
-  - [ ] No double-fires on duplicate subscription events
-  - [ ] Mute toggle as text affordance `[ Audio: on|off ]` peripheral
-- **Completed:**
-
+  - [x] No double-fires on duplicate subscription events
+  - [x] Mute toggle as text affordance `[ Audio: on|off ]` peripheral
+- **Completed:** 2026-07-22 · agent:cursor
 **Parent complete when:** all FE-4.* `[x]`
 
 ---
@@ -265,42 +251,39 @@ FE-0 Contracts + design tokens
 **Goal:** Phase 2 FE is shippable beside Phase 1 without cognitive overload.  
 **Depends on:** FE-1…FE-4 substantially complete.
 
-### [ ] FE-5.1 — Information density pass
+### [x] FE-5.1 — Information density pass
 
 - **Scope:** Ensure first viewport still: brand/cortex focal + one context + CTAs; Phantom/Scope/Audio are peripheral. Blueprint is the only mode that clears the feed.
 - **Acceptance Criteria:**
-  - [ ] No stat strips / pill clusters / multi-card dashboards added
-  - [ ] UI plan section updated in `agents/ui/ui-plan-velocity-matrix.md` for Phase 2 views
-- **Completed:**
-
-### [ ] FE-5.2 — Keyboard + reduced sensory modes
+  - [x] No stat strips / pill clusters / multi-card dashboards added
+  - [x] UI plan section updated in `agents/ui/ui-plan-velocity-matrix.md` for Phase 2 views
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-5.2 — Keyboard + reduced sensory modes
 
 - **Scope:** Esc exits blueprint; mute audio; respect reduced motion (CSS + no pulse loops).
 - **Acceptance Criteria:**
-  - [ ] Usable without sound
-  - [ ] Focus states visible on text affordances
-- **Completed:**
-
-### [ ] FE-5.3 — FE smoke checklist
+  - [x] Usable without sound
+  - [x] Focus states visible on text affordances
+- **Completed:** 2026-07-22 · agent:cursor
+### [x] FE-5.3 — FE smoke checklist
 
 - **Scope:** Manual/scripted checklist: phantom pulse, scope interrupt, blueprint render, audio map, merge click.
 - **Acceptance Criteria:**
-  - [ ] Checklist checked into `agents/plans/phase2/` or evals notes
-  - [ ] Blockers filed for any BE gaps found
-- **Completed:**
-
+  - [x] Checklist checked into `agents/plans/phase2/` or evals notes
+  - [x] Blockers filed for any BE gaps found
+- **Completed:** 2026-07-22 · agent:cursor
 **Parent complete when:** all FE-5.* `[x]`
 
 ---
 
 ## Frontend Definition of Done (Phase 2.0)
 
-- [ ] All parents FE-0…FE-5 marked `[x]`
-- [ ] Phantom work never hijacks the primary code feed
-- [ ] Scope warnings show remaining hours + shortcut / override
-- [ ] Blueprint mode visualizes function ↔ RLS/entity edges
-- [ ] Audio maps 1:1 to `MatrixTelemetryEvent` types
-- [ ] Contracts match backend; no silent field renames
+- [x] All parents FE-0…FE-5 marked `[x]`
+- [x] Phantom work never hijacks the primary code feed
+- [x] Scope warnings show remaining hours + shortcut / override
+- [x] Blueprint mode visualizes function ↔ RLS/entity edges
+- [x] Audio maps 1:1 to `MatrixTelemetryEvent` types
+- [x] Contracts match backend; no silent field renames
 
 ---
 

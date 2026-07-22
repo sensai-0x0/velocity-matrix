@@ -5,13 +5,17 @@
 import { base44 } from "@/api/base44Client";
 import { getOrCreateSessionId } from "@/lib/ensureHackathonState";
 import type {
+  ArchitectureGraphPayload,
   ExecutionPayload,
   ExecutionResult,
+  PhantomThreadSpawnPayload,
   ProvisionHackathonStatePayload,
   ProvisionHackathonStateResult,
   VoiceIngestionPayload,
   VoiceIngestionResponse,
 } from "@/contracts/data_contracts";
+
+export { getOrCreateSessionId };
 
 const URGENT_RE = /\b(urgent|blocker|critical|asap|emergency)\b/i;
 
@@ -76,7 +80,7 @@ function unwrapInvoke<T>(result: unknown): T {
   return result as T;
 }
 
-/** Convenience: deploy/override/discard with github_auto_commit default */
+/** Convenience: deploy/override/discard/merge with github_auto_commit default */
 export async function executeArtifactAction(
   artifactId: string,
   action: ExecutionPayload["action_taken"],
@@ -95,4 +99,24 @@ export async function executeArtifactAction(
       ? { commit_message: options.commitMessage }
       : {}),
   });
+}
+
+/** Phase 2 — spawn phantom thread */
+export async function spawnPhantomThread(
+  payload: PhantomThreadSpawnPayload,
+): Promise<unknown> {
+  const result = await base44.functions.invoke("spawn-phantom-thread", payload);
+  return unwrapInvoke(result);
+}
+
+/** Phase 2 — build / refresh architecture graph */
+export async function buildArchitectureGraph(payload?: {
+  session_id?: string;
+  force_refresh?: boolean;
+}): Promise<{ status: string; graph?: ArchitectureGraphPayload }> {
+  const result = await base44.functions.invoke(
+    "build-architecture-graph",
+    payload ?? {},
+  );
+  return unwrapInvoke(result);
 }

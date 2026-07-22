@@ -17,6 +17,7 @@ import {
   parseLlmResponse,
   type LlmSolution,
 } from "../../shared/llm.ts";
+import { gradeScope } from "../../shared/scope.ts";
 
 /** Manual invoke, entity automation, or nested connector-style payload */
 interface WebhookPayload {
@@ -177,8 +178,58 @@ Deno.serve(async (req) => {
 
     const stateList = await base44.entities.HackathonState.list();
     const currentState = stateList[0] as
-      | { current_focus_area?: string }
+      | {
+          current_focus_area?: string;
+          core_mvp_definition?: string;
+          countdown_deadline?: number;
+          scope_mode?: string;
+        }
       | undefined;
+
+    // BE-2 Scope-Sniper — grade before expensive LLM work
+    const grade = gradeScope({
+      transcript: String(blocker.raw_transcript ?? ""),
+      mvpDefinition: currentState?.core_mvp_definition,
+      countdownDeadline: currentState?.countdown_deadline,
+      scopeOverride: Boolean(
+        (blocker as { scope_override?: boolean }).scope_override,
+      ),
+    });
+
+    if (grade.shouldWarn) {
+      const hours =
+        grade.hours_remaining != null
+          ? Math.round(grade.hours_remaining * 10) / 10
+          : 0;
+      const focus = `SCOPE_WARNING · ${hours}h left · ${grade.warning_message}${
+        grade.shortcut_suggestion
+          ? ` · Shortcut: ${grade.shortcut_suggestion}`
+          : ""
+      }`;
+
+      await base44.entities.ActiveBlockers.update(blockerId, {
+        current_focus: focus,
+        telemetry_event: "SCOPE_WARNING",
+        latency_ms: Date.now() - startedAt,
+      });
+
+      if (currentState?.scope_mode === "strict") {
+        await base44.entities.ActiveBlockers.update(blockerId, {
+          parsed_issue: grade.warning_message,
+          is_resolved: false,
+          current_focus: focus,
+        });
+        return Response.json(
+          {
+            status: "scope_blocked",
+            grade,
+            telemetry: "SCOPE_WARNING",
+          },
+          { status: 200 },
+        );
+      }
+      // advisory: continue synthesis but UI sees SCOPE_WARNING telemetry
+    }
 
     await streamStatus(
       base44,
@@ -267,6 +318,9 @@ Return a strict JSON object matching the schema with:
       available_actions: ["deploy", "override", "discard"],
       has_been_committed: false,
       is_discarded: false,
+      execution_mode: "sync",
+      eval_status: "passing",
+      telemetry_event: "SYNTHESIS_COMPLETE",
     });
 
     // Terminal success — UI watches is_resolved + completion_percentage:100
@@ -277,6 +331,7 @@ Return a strict JSON object matching the schema with:
       current_focus: "Resolution ready",
       latency_ms: Date.now() - startedAt,
       is_resolved: true,
+      telemetry_event: "SYNTHESIS_COMPLETE",
     });
 
     const resolution: ResolutionArtifact = {
@@ -291,6 +346,8 @@ Return a strict JSON object matching the schema with:
       },
       neural_summary: solution.neural_summary,
       available_actions: ["deploy", "override", "discard"],
+      execution_mode: "sync",
+      eval_status: "passing",
     };
 
     return Response.json(

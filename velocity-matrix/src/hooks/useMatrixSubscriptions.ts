@@ -18,8 +18,32 @@ import {
   toSynthesisStream,
   upsertFront,
 } from "@/lib/matrixMappers";
+import {
+  asTelemetryType,
+  playTelemetry,
+} from "@/audio/tactileTelemetry";
 
 const RECONNECT_MS = 2_500;
+
+function parseScopeWarningFocus(focus: string | undefined): {
+  hoursRemaining: number;
+  warningMessage: string;
+  shortcutSuggestion?: string;
+} | null {
+  if (!focus || !focus.includes("SCOPE_WARNING")) return null;
+  const hoursMatch = focus.match(/([\d.]+)h\s+left/i);
+  const hoursRemaining = hoursMatch ? Number(hoursMatch[1]) : 0;
+  const shortcutMatch = focus.match(/Shortcut:\s*(.+)$/i);
+  const warningMessage = focus
+    .replace(/^SCOPE_WARNING\s*·\s*/i, "")
+    .replace(/\s*·\s*Shortcut:.*$/i, "")
+    .trim();
+  return {
+    hoursRemaining,
+    warningMessage: warningMessage || "High-friction request detected.",
+    ...(shortcutMatch ? { shortcutSuggestion: shortcutMatch[1]!.trim() } : {}),
+  };
+}
 
 export interface UseMatrixSubscriptionsOptions {
   enabled: boolean;
@@ -117,11 +141,37 @@ export function useMatrixSubscriptions({
           setSynthesis(stream);
         }
 
-        if (event.type === "create") {
+        const tel = asTelemetryType(row.telemetry_event);
+        if (tel) playTelemetry(tel);
+
+        const scope = parseScopeWarningFocus(row.current_focus);
+        if (scope && (event.type === "create" || event.type === "update")) {
+          playTelemetry("SCOPE_WARNING");
           dispatchRef.current({
-            type: "INGEST_ACKNOWLEDGED",
-            blockerId: stream.blocker_id,
+            type: "SCOPE_WARNING",
+            hoursRemaining: scope.hoursRemaining,
+            warningMessage: scope.warningMessage,
+            ...(scope.shortcutSuggestion
+              ? { shortcutSuggestion: scope.shortcutSuggestion }
+              : {}),
           });
+        }
+
+        if (event.type === "create") {
+          const agent = row.assigned_agent ?? "";
+          if (agent === "phantom_executor") {
+            dispatchRef.current({
+              type: "INGEST_ACKNOWLEDGED",
+              blockerId: stream.blocker_id,
+              execution: "phantom",
+            });
+          } else {
+            dispatchRef.current({
+              type: "INGEST_ACKNOWLEDGED",
+              blockerId: stream.blocker_id,
+              execution: "sync",
+            });
+          }
         }
       } catch (err) {
         console.error("Matrix Disconnect: Blocker Stream Failed", err);
@@ -153,6 +203,17 @@ export function useMatrixSubscriptions({
             event.id,
             event.timestamp || new Date().toISOString(),
           );
+          const tel = asTelemetryType(row.telemetry_event);
+          if (tel) playTelemetry(tel);
+          else if (row.eval_status === "passing") playTelemetry("EVALS_PASSED");
+          else playTelemetry("SYNTHESIS_COMPLETE");
+
+          // Phantom merges stay ambient — only sync artifacts steal Resolution Feed
+          if (row.execution_mode === "phantom") {
+            setLatestArtifact(artifact);
+            return;
+          }
+
           setLatestArtifact(artifact);
           if (artifact.blocker_id) {
             dispatchRef.current({

@@ -15,8 +15,10 @@ import {
   mergeContextTags,
   resolveUrgency,
 } from "../../shared/ingest.ts";
+import { detectPhantomIntent } from "../../shared/phantom.ts";
 
 const ASSIGNED_AGENT = "llm_reasoning_core";
+const PHANTOM_AGENT = "phantom_executor";
 
 /**
  * Validate required VoiceIngestionPayload fields.
@@ -71,6 +73,26 @@ Deno.serve(async (req) => {
     // Rule A: never persist client hacker_id — owner_id from JWT only
     const contextTags = mergeContextTags(transcript, body.context_tags);
     const urgencyFlag = resolveUrgency(transcript, body.urgency_flag);
+    const phantom = detectPhantomIntent(transcript);
+    const assigned = phantom ? PHANTOM_AGENT : ASSIGNED_AGENT;
+
+    // Blueprint voice shortcut — rebuild neural map without creating a blocker
+    if (/\b(visualize|visualise)\s+(the\s+)?data\s+flow\b|\bneural\s+map\b|\barchitecture\s+graph\b/i.test(transcript)) {
+      void base44.functions
+        .invoke("build-architecture-graph", {
+          session_id: body.session_id,
+          force_refresh: true,
+        })
+        .catch((err: unknown) => {
+          console.warn("[process-voice-command] architecture graph invoke failed", err);
+        });
+      const response: VoiceIngestionResponse = {
+        status: "acknowledged",
+        blocker_id: "",
+        assigned_agent: "architecture_graph",
+      };
+      return Response.json(response, { status: 200 });
+    }
 
     const blocker = await base44.entities.ActiveBlockers.create({
       owner_id: user.id,
@@ -78,31 +100,43 @@ Deno.serve(async (req) => {
       raw_transcript: transcript,
       context_tags: contextTags,
       urgency_flag: urgencyFlag,
-      assigned_agent: ASSIGNED_AGENT,
+      assigned_agent: assigned,
       status: "parsing_intent",
       completion_percentage: 0,
-      current_focus: "Queued for synthesis…",
+      current_focus: phantom
+        ? "Phantom Thread queued…"
+        : "Queued for synthesis…",
       latency_ms: 0,
       is_resolved: false,
     });
 
     const blockerId = blocker.id as string;
 
-    // Dual-path (temporary): fire-and-forget Node 02 until entity automation is proven in deploy.
-    // Canonical path is ActiveBlockers INSERT automation on synthesize-solution/function.jsonc.
-    void base44.functions
-      .invoke("synthesize-solution", { blocker_id: blockerId })
-      .catch((err: unknown) => {
-        console.warn(
-          "[process-voice-command] synthesize invoke failed (automation may still run)",
-          err,
-        );
-      });
+    if (phantom) {
+      void base44.functions
+        .invoke("spawn-phantom-thread", {
+          blocker_id: blockerId,
+          brief: transcript,
+        })
+        .catch((err: unknown) => {
+          console.warn("[process-voice-command] phantom spawn failed", err);
+        });
+    } else {
+      // Dual-path (temporary): fire-and-forget Node 02 until entity automation is proven in deploy.
+      void base44.functions
+        .invoke("synthesize-solution", { blocker_id: blockerId })
+        .catch((err: unknown) => {
+          console.warn(
+            "[process-voice-command] synthesize invoke failed (automation may still run)",
+            err,
+          );
+        });
+    }
 
     const response: VoiceIngestionResponse = {
       status: "acknowledged",
       blocker_id: blockerId,
-      assigned_agent: ASSIGNED_AGENT,
+      assigned_agent: assigned,
     };
     return Response.json(response, { status: 200 });
   } catch (error) {

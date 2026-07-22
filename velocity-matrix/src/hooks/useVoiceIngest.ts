@@ -122,11 +122,27 @@ export function useVoiceIngest({
       setUrgency(Boolean(payload.urgency_flag));
 
       const response = await processVoiceCommand(payload);
-      if (response.status === "acknowledged" && response.blocker_id) {
-        dispatchRef.current({
-          type: "INGEST_ACKNOWLEDGED",
-          blockerId: response.blocker_id,
-        });
+      if (response.status === "acknowledged") {
+        const agent = response.assigned_agent ?? "";
+        if (agent === "architecture_graph") {
+          dispatchRef.current({
+            type: "INGEST_ACKNOWLEDGED",
+            blockerId: response.blocker_id || "",
+            execution: "map",
+          });
+        } else if (agent === "phantom_executor") {
+          dispatchRef.current({
+            type: "INGEST_ACKNOWLEDGED",
+            blockerId: response.blocker_id,
+            execution: "phantom",
+          });
+        } else if (response.blocker_id) {
+          dispatchRef.current({
+            type: "INGEST_ACKNOWLEDGED",
+            blockerId: response.blocker_id,
+            execution: "sync",
+          });
+        }
       } else {
         setError(">> INGEST_REJECTED · try again");
       }
