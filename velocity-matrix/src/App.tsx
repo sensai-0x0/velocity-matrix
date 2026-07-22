@@ -1,17 +1,19 @@
 import { MatrixVoiceWave } from "./components/MatrixVoiceWave";
-import { NeuralNode, neuralNodePropsFromArtifact } from "./components/NeuralNode";
+import { NeuralNode } from "./components/NeuralNode";
 import { SynthesisSpinner } from "./components/SynthesisSpinner";
 import { LockedCortex } from "./components/LockedCortex";
 import { CortexMockControls } from "./components/CortexMockControls";
 import { MatrixDisconnectToast } from "./components/MatrixDisconnectToast";
+import { AmbientVoicePanel } from "./components/AmbientVoicePanel";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useCortexView } from "@/hooks/useCortexView";
 import { useMatrixSubscriptions } from "@/hooks/useMatrixSubscriptions";
+import { useVoiceIngest } from "@/hooks/useVoiceIngest";
 import { base44 } from "@/api/base44Client";
 
 /**
  * React application root — Neuropunk Cortex surface.
- * F3: Base44 entity subscriptions drive synthesis telemetry + resolution artifacts.
+ * F4: Ambient voice/text ingest → process-voice-command → Synthesis view.
  */
 export default function App() {
   const { status, user, error, refresh, logout } = useAuthSession();
@@ -20,7 +22,6 @@ export default function App() {
   const {
     synthesis,
     latestArtifact,
-    blockers,
     solutions,
     disconnectMessage,
     clearDisconnect,
@@ -30,8 +31,15 @@ export default function App() {
     activeBlockerId: context.activeBlockerId,
     dispatch,
   });
+  const voice = useVoiceIngest({
+    enabled: authenticated && view === "ambient",
+    dispatch,
+  });
 
   const sdkReady = base44.getConfig().appId !== "velocity-matrix-unset";
+  const waveActive = view === "ambient" && (voice.listening || voice.submitting);
+  const waveAmplitude =
+    view === "ambient" ? Math.max(0.35, voice.amplitude) : 0.25;
 
   return (
     <main
@@ -59,8 +67,9 @@ export default function App() {
 
       <section className="cortex-stage" aria-label="Cortex stage">
         <MatrixVoiceWave
-          active={view === "ambient"}
-          amplitude={view === "ambient" ? 0.55 : 0.25}
+          active={waveActive}
+          amplitude={waveAmplitude}
+          urgency={view === "ambient" && voice.urgency}
         />
 
         {status === "loading" && (
@@ -73,13 +82,7 @@ export default function App() {
           <LockedCortex error={error} onAuthenticated={refresh} />
         )}
 
-        {view === "ambient" && (
-          <p className="cortex-ambient-hint" role="status">
-            {blockers.length > 0
-              ? `>> INGESTING_AUDIO… ${blockers.length} open blocker(s)`
-              : ">> INGESTING_AUDIO… ambient cortex unlocked"}
-          </p>
-        )}
+        {view === "ambient" && <AmbientVoicePanel voice={voice} />}
 
         {view === "synthesis" && (
           <>
@@ -106,14 +109,25 @@ export default function App() {
 
         {view === "resolution" && (
           <NeuralNode
-            {...(latestArtifact
-              ? neuralNodePropsFromArtifact(latestArtifact)
-              : {
-                  title: "Resolution Feed",
-                  code: context.activeArtifactId
-                    ? `// artifact ${context.activeArtifactId}\n// awaiting F6 execute-resolution bind`
-                    : "// awaiting execution trace",
-                })}
+            title="Resolution Feed"
+            {...(latestArtifact?.neural_summary
+              ? { summary: latestArtifact.neural_summary }
+              : {})}
+            {...(latestArtifact?.payload.language
+              ? { language: latestArtifact.payload.language }
+              : {})}
+            {...(latestArtifact?.payload.file_path
+              ? { filePath: latestArtifact.payload.file_path }
+              : {})}
+            code={
+              latestArtifact?.payload.code ||
+              (context.activeArtifactId
+                ? `// artifact ${context.activeArtifactId}\n// awaiting F6 execute-resolution bind`
+                : "// awaiting execution trace")
+            }
+            {...(latestArtifact?.available_actions
+              ? { actions: latestArtifact.available_actions }
+              : {})}
             {...(synthesis != null
               ? { latencyMs: synthesis.latency_ms }
               : {})}

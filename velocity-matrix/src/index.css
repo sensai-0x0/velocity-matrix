@@ -95,6 +95,15 @@ body {
   animation-delay: 320ms;
 }
 
+.matrix-voice-wave[data-urgency="true"] .wave-bar {
+  background: var(--crimson);
+  box-shadow: 0 0 10px rgba(225, 29, 72, 0.45);
+}
+
+.matrix-voice-wave[data-urgency="true"][data-active="true"] .wave-bar {
+  background: var(--crimson);
+}
+
 @keyframes pulse-wave {
   0%,
   100% {
@@ -393,3 +402,57 @@ body {
   border: 1px solid var(--crimson-dim);
   z-index: 40;
 }
+
+.ambient-voice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.85rem;
+  max-width: 32rem;
+  width: 100%;
+}
+
+.ambient-transcript {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--bio);
+  opacity: 0.9;
+  transition: opacity 400ms ease, color 160ms ease;
+}
+
+.ambient-transcript[data-urgency="true"] {
+  color: var(--crimson);
+}
+
+.ambient-text-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.ambient-text-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 3.5rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--bio-dim);
+  border-radius: 0;
+  background: rgba(11, 16, 24, 0.85);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.ambient-text-form textarea:focus {
+  outline: 1px solid var(--bio);
+  border-color: var(--bio);
+}
+
+.ambient-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+

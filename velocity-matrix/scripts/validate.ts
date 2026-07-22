@@ -384,6 +384,30 @@ if (
   ok("App.tsx matrix subscriptions");
 }
 
+console.log("\n>> [VALIDATE] Frontend F4 voice ingest");
+for (const rel of [
+  "src/hooks/useVoiceIngest.ts",
+  "src/components/AmbientVoicePanel.tsx",
+  "src/api/matrixApi.ts",
+  "src/lib/speechRecognition.ts",
+]) {
+  if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
+  else ok(rel);
+}
+if (
+  !appSrc.includes("useVoiceIngest") ||
+  !appSrc.includes("AmbientVoicePanel")
+) {
+  fail("App.tsx missing F4 voice ingest wiring");
+} else {
+  ok("App.tsx Ambient voice ingest");
+}
+if (!css.includes('data-urgency="true"') && !css.includes("[data-urgency=")) {
+  fail("src/index.css missing urgency wave styles");
+} else {
+  ok("index.css urgency wave");
+}
+
 console.log("\n>> [VALIDATE] No markdown contamination in config artifacts");
 for (const rel of ["base44/config.jsonc", "base44/connectors/manifest.json"]) {
   const raw = readFileSync(join(ROOT, rel), "utf8");
