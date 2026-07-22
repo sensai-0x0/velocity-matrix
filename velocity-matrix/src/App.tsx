@@ -1,5 +1,5 @@
 import { MatrixVoiceWave } from "./components/MatrixVoiceWave";
-import { NeuralNode } from "./components/NeuralNode";
+import { NeuralNode, neuralNodePropsFromArtifact } from "./components/NeuralNode";
 import { SynthesisSpinner } from "./components/SynthesisSpinner";
 import { LockedCortex } from "./components/LockedCortex";
 import { CortexMockControls } from "./components/CortexMockControls";
@@ -83,30 +83,37 @@ export default function App() {
 
         {view === "synthesis" && (
           <>
-            <SynthesisSpinner synthesizing label={synthesisLabel} />
+            <SynthesisSpinner
+              synthesizing
+              label={synthesisLabel}
+              {...(synthesis != null
+                ? {
+                    progress: synthesis.completion_percentage,
+                    status: synthesis.status,
+                    focus: synthesis.current_focus,
+                    latencyMs: synthesis.latency_ms,
+                  }
+                : {})}
+            />
             <p className="cortex-probe" role="status">
               {synthesis?.current_focus ||
                 (context.activeBlockerId
                   ? `blocker:${context.activeBlockerId}`
                   : ">> AWAITING_TELEMETRY")}
             </p>
-            {synthesis && (
-              <p className="cortex-telemetry" role="status">
-                {`${synthesis.completion_percentage}% · ${synthesis.latency_ms}ms`}
-              </p>
-            )}
           </>
         )}
 
         {view === "resolution" && (
           <NeuralNode
-            title={latestArtifact?.neural_summary || "Resolution Feed"}
-            code={
-              latestArtifact?.payload.code ||
-              (context.activeArtifactId
-                ? `// artifact ${context.activeArtifactId}\n// awaiting F6 payload bind`
-                : "// awaiting execution trace")
-            }
+            {...(latestArtifact
+              ? neuralNodePropsFromArtifact(latestArtifact)
+              : {
+                  title: "Resolution Feed",
+                  code: context.activeArtifactId
+                    ? `// artifact ${context.activeArtifactId}\n// awaiting F6 execute-resolution bind`
+                    : "// awaiting execution trace",
+                })}
             {...(synthesis != null
               ? { latencyMs: synthesis.latency_ms }
               : {})}

@@ -188,9 +188,79 @@ for (const rel of [
   "src/contracts/data_contracts.ts",
   "base44/shared/contracts.ts",
   "src/api/base44Client.ts",
+  "src/api/matrixApi.ts",
+  "src/lib/matrixMappers.ts",
 ]) {
   if (!existsSync(join(ROOT, rel))) fail(`missing ${rel}`);
   else ok(rel);
+}
+
+console.log("\n>> [VALIDATE] Frontend ↔ backend contract parity");
+const uiContracts = readFileSync(
+  join(ROOT, "src/contracts/data_contracts.ts"),
+  "utf8",
+);
+const beContracts = readFileSync(
+  join(ROOT, "base44/shared/contracts.ts"),
+  "utf8",
+);
+for (const name of [
+  "VoiceIngestionPayload",
+  "VoiceIngestionResponse",
+  "SynthesisStateStream",
+  "ResolutionArtifact",
+  "ExecutionPayload",
+  "ExecutionResult",
+]) {
+  const uiHas = uiContracts.includes(`export interface ${name}`);
+  const beHas = beContracts.includes(`export interface ${name}`);
+  if (!uiHas || !beHas) {
+    fail(`interface ${name} missing in ${!uiHas ? "UI" : "backend"} contracts`);
+  } else {
+    ok(`interface ${name}`);
+  }
+}
+if (!uiContracts.includes("hacker_id?:") || !beContracts.includes("hacker_id?:")) {
+  fail("VoiceIngestionPayload.hacker_id must be optional (Node 01 uses JWT owner_id)");
+} else {
+  ok("hacker_id optional on both contract modules");
+}
+for (const token of [
+  "blocker_id",
+  "completion_percentage",
+  "artifact_id",
+  "available_actions",
+  "target_connector",
+  "deployment_url",
+]) {
+  if (!uiContracts.includes(token) || !beContracts.includes(token)) {
+    fail(`token ${token} missing from dual contracts`);
+  } else {
+    ok(`token ${token}`);
+  }
+}
+
+console.log("\n>> [VALIDATE] Entity → UI mapper + typed invokes");
+const mapperSrc = readFileSync(join(ROOT, "src/lib/matrixMappers.ts"), "utf8");
+for (const bridge of [
+  "toSynthesisStream",
+  "toResolutionArtifact",
+  "blocker_id",
+  "artifact_id",
+  "blocker_reference",
+  "payload",
+]) {
+  if (!mapperSrc.includes(bridge)) fail(`matrixMappers missing ${bridge}`);
+  else ok(`mapper ${bridge}`);
+}
+const apiSrc = readFileSync(join(ROOT, "src/api/matrixApi.ts"), "utf8");
+for (const invoke of [
+  "process-voice-command",
+  "execute-resolution",
+  "buildVoiceIngestionPayload",
+]) {
+  if (!apiSrc.includes(invoke)) fail(`matrixApi missing ${invoke}`);
+  else ok(`matrixApi ${invoke}`);
 }
 
 console.log("\n>> [VALIDATE] Deno function entrypoints");

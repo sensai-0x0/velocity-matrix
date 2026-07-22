@@ -5,7 +5,8 @@
 
 /** UI -> Base44: process-voice-command */
 export interface VoiceIngestionPayload {
-  hacker_id: string;
+  /** Optional client hint — Node 01 forces owner_id from JWT, never trusts this */
+  hacker_id?: string;
   session_id: string;
   timestamp_ms: number;
   transcript: string;
