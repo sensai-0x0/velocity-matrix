@@ -32,8 +32,8 @@
 
 use crate::env;
 use crate::state::{
-    BootState, BootStateError, Evidence, Host, RawOutput, SCHEMA_VERSION, SecurityMode,
-    TargetContainer,
+    BootState, BootStateError, Evidence, Host, OtherContainer, RawOutput, SCHEMA_VERSION,
+    SecurityMode, TargetContainer,
 };
 use crate::wrapper::{self, CommandRecord, WrapperError};
 use time::OffsetDateTime;
@@ -71,6 +71,13 @@ pub fn collect() -> Result<BootState, CollectError> {
     let diskutil_record = wrapper::run(&["diskutil", "info", "/"])?;
     let volume_group_uuid =
         extract_volume_group(&diskutil_record.stdout).ok_or(CollectError::NoVolumeGroup)?;
+
+    // `diskutil apfs listVolumeGroups` embeds the same kind of volatile per-volume
+    // "Capacity Consumed" counters as `diskutil info /` (confirmed on real hardware,
+    // same reasoning as this module's doc comment) — host-identification-shaped, so
+    // audited via the wrapper but not persisted into evidence.raw_outputs.
+    let list_vg_record = wrapper::run(&["diskutil", "apfs", "listVolumeGroups"])?;
+    let other_containers = extract_other_containers(&list_vg_record.stdout, &volume_group_uuid);
 
     // Security-relevant reads: recorded into evidence.raw_outputs.
     let ssv_record = wrapper::run(&["csrutil", "authenticated-root", "status"])?;
@@ -111,7 +118,7 @@ pub fn collect() -> Result<BootState, CollectError> {
             allows_third_party_kexts,
         },
         enrolled_objects: vec![],
-        other_containers: vec![],
+        other_containers,
         evidence: Evidence { raw_outputs },
     };
 
@@ -157,6 +164,34 @@ fn extract_volume_group(diskutil_output: &str) -> Option<String> {
         .lines()
         .find(|l| l.to_lowercase().contains("apfs volume group"))?;
     line.split(':').nth(1).map(|s| s.trim().to_string())
+}
+
+/// Every `Volume Group <uuid>` line from `diskutil apfs listVolumeGroups`, excluding the
+/// target container's own group. `security_mode` for each is always `Unknown`: reading
+/// another container's policy needs `bputil -d -v <that-uuid>` under `sudo`, which this
+/// module already avoids prompting for even for the *target* container (see module doc) —
+/// doing it per other-container would multiply that same non-interactive-sudo gamble with no
+/// way to batch it, for a field (`spec/contract-spec.md`'s `OtherContainer.security_mode`)
+/// that only exists so `verify`'s `SingleContainerTouched` invariant (P3) has something to
+/// diff — it doesn't need to be populated with real policy data until that's wired up.
+fn extract_other_containers(
+    list_volume_groups_output: &str,
+    target_vg: &str,
+) -> Vec<OtherContainer> {
+    list_volume_groups_output
+        .lines()
+        .filter_map(|line| {
+            let idx = line.find("Volume Group ")?;
+            let rest = &line[idx + "Volume Group ".len()..];
+            let uuid = rest.split_whitespace().next()?;
+            Some(uuid.to_string())
+        })
+        .filter(|uuid| uuid != target_vg)
+        .map(|volume_group_uuid| OtherContainer {
+            volume_group_uuid,
+            security_mode: SecurityMode::Unknown,
+        })
+        .collect()
 }
 
 /// Best-effort parse of `bputil -d`'s "OS Type"-adjacent "Security Mode" line. Field names
@@ -218,6 +253,38 @@ mod tests {
             extract_volume_group(fixture),
             Some("<REDACTED-UUID>".to_string())
         );
+    }
+
+    #[test]
+    fn excludes_the_target_volume_group_and_parses_others() {
+        // Hand-built, clearly not a real capture (see filename) — this dev machine only has
+        // one real volume group, so the exclusion branch of extract_other_containers has
+        // nothing real to exercise it. Structure matches
+        // diskutil_apfs_listVolumeGroups_REDACTED.txt's real format.
+        let synthetic =
+            include_str!("../../tests/fixtures/diskutil_apfs_listVolumeGroups_SYNTHETIC_multi.txt");
+        let others = extract_other_containers(synthetic, "22222222-2222-2222-2222-222222222222");
+        assert_eq!(others.len(), 1);
+        assert_eq!(
+            others[0].volume_group_uuid,
+            "44444444-4444-4444-4444-444444444444"
+        );
+        assert_eq!(others[0].security_mode, SecurityMode::Unknown);
+    }
+
+    #[test]
+    fn parses_real_single_volume_group_fixture_and_finds_nothing_other_than_target() {
+        let fixture =
+            include_str!("../../tests/fixtures/diskutil_apfs_listVolumeGroups_REDACTED.txt");
+        // Redaction zeroed every UUID, including the one real volume group — so with that
+        // same zeroed UUID as the target, nothing "other" should be found.
+        let others = extract_other_containers(fixture, "00000000-0000-0000-0000-000000000000");
+        assert!(others.is_empty());
+    }
+
+    #[test]
+    fn no_volume_group_lines_yields_empty() {
+        assert!(extract_other_containers("nothing relevant here", "any-uuid").is_empty());
     }
 
     #[test]

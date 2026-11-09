@@ -17,6 +17,8 @@ output into `tests/fixtures` for deterministic parser tests").
 | `system_profiler_hardware_REDACTED.txt` | `system_profiler SPHardwareDataType` | Apple M2 Pro | 25D125 |
 | `ioreg_platform_expert_device_REDACTED.txt` | `ioreg -rd1 -c IOPlatformExpertDevice` | Apple M2 Pro | 25D125 |
 | `image4_apticket.der` | vendored, not captured — see below | n/a | n/a |
+| `diskutil_apfs_listVolumeGroups_REDACTED.txt` | `diskutil apfs listVolumeGroups` | Apple M2 Pro | 25D125 |
+| `diskutil_apfs_listVolumeGroups_SYNTHETIC_multi.txt` | hand-built, not captured — see below | n/a | n/a |
 
 `image4_apticket.der` is a real, signed IM4M manifest, copied verbatim from the `image4`
 crate's own test suite (`tests/data/apticket.der` in `image4` v0.8.2, `MIT OR Apache-2.0`
@@ -26,7 +28,15 @@ needing to extract a manifest from a multi-GB IPSW. It is binary, not text, and 
 redacted — it was never tied to a real device in the first place (it's the crate authors'
 own synthetic test fixture).
 
-All of the text fixtures above were captured from macOS (not 1TR) — these are the commands `env`/`state/collect`
+`diskutil_apfs_listVolumeGroups_SYNTHETIC_multi.txt` is hand-built, not captured: this
+development machine only has one real APFS volume group, so there was nothing real to
+capture for the "exclude the target, keep the others" branch of
+`src/state/collect.rs`'s `extract_other_containers`. It's structured to match the real
+single-group capture's format with a second, fabricated group added. If a machine with a
+genuine second bootable volume group becomes available, replace this with a real redacted
+capture and update `src/state/collect.rs`'s corresponding test.
+
+All of the remaining text fixtures above were captured from macOS (not 1TR) — these are the commands `env`/`state/collect`
 can run without elevation. All are read-only and change nothing on the host they were captured
 from (golden rule 3).
 

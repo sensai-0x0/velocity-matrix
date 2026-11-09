@@ -41,12 +41,19 @@ from `spec/build-spec.md`'s CLI table implies arbitrary volume targeting. Not ne
 something exercises a second bootable volume (e.g. P3's scratch-container work), so leave
 this until `phase-3.md` actually needs it rather than building it speculatively now.
 
-## 4. `other_containers`
+## 4. ~~`other_containers`~~ — done
 
-Always empty right now — `collect()` never enumerates volume groups other than the target.
-This matters once `SingleContainerTouched` (`spec/contract-spec.md`'s invariant) needs
-checking in P3's `verify`, since that invariant is specifically about *other* containers
-staying byte-identical. Build this alongside `phase-3.md`'s work, driven by whatever
-`diskutil apfs listVolumeGroups` gives you (format already captured informally — see the
-determinism note in `CLAUDE.md`'s "Deviations" section about `diskutil`'s volatile fields;
-the same caveat about not hashing its live counters into evidence applies here).
+`collect()` now populates `other_containers` via `diskutil apfs listVolumeGroups`
+(`extract_other_containers` in `src/state/collect.rs`), excluding the target's own volume
+group. `security_mode` for each is always `SecurityMode::Unknown` — reading another
+container's real policy needs `bputil -d -v <that-uuid>` under `sudo`, which is deliberately
+out of scope here for the same non-interactive-credential reasons the target container's
+own read already is (see this module's doc comment). That's enough for `SingleContainerTouched`
+(P3's `verify`) to have something to diff against; it doesn't need real per-container policy
+data to do that job.
+
+Caveat: this development machine only has one real APFS volume group, so the "exclude the
+target, keep the others" branch is tested against a hand-built synthetic fixture
+(`tests/fixtures/diskutil_apfs_listVolumeGroups_SYNTHETIC_multi.txt`), not a real multi-group
+capture. If a machine with a genuine second bootable volume group becomes available, replace
+it with a real redacted capture (see `tests/fixtures/README.md`).
