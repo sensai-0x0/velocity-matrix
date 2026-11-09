@@ -92,13 +92,12 @@ The gate between P2 and P3 is the one to protect most carefully: no mutating cod
 **Current state: P0–P2 implemented; P3 onward deliberately not started.** P3–P5 require a real Mac, a disposable scratch APFS container, and a human physically rebooting into 1TR to enter owner credentials — none of which this agent can do unattended in a terminal session. If asked to "finish the project," that boundary is why `authorize`/`execute`/`verify` remain doc-comment-only stubs: implementing their logic without a way to prove it against a real 1TR round trip would mean shipping untested, safety-critical code, which is worse than not shipping it. Picking the work back up means a human with physical hardware access driving P3's round-trip tests, not more autonomous coding.
 
 What's verified, concretely:
-- `cargo build`, `cargo test` (39 tests), `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, and `./scripts/ci_guards.sh` all pass as of this writing.
+- `cargo build`, `cargo test` (43 tests), `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, and `./scripts/ci_guards.sh` all pass as of this writing.
 - `cargo run -- evaluate --json` run twice on this real Mac differs **only** in `captured_at` — the literal P1 exit-gate proof, reverified after the `evidence.raw_outputs` scoping fix above.
 - `cargo run -- plan full` on this machine correctly refuses with exit 11 ("current security_mode is Unknown") because there's no cached `sudo` credential to read the real policy — this is the fail-closed path working as designed, not a bug.
 
 What's NOT done that's nominally in scope:
 - `bputil -d` itself has no captured fixture (needs a human to run it under `sudo` once) — see `tests/fixtures/README.md`.
-- Golden-file tests for `plan` exist as inline unit tests in `plan.rs`, not as separate fixture files; this is a reasonable reading of "golden-file tests" for this problem size, not a gap, but call it out if that changes.
 - CI (`.github/workflows/bputil-eval-ci.yml`, at the Metacogna repo root following this monorepo's per-project convention) is written but unverified by an actual GitHub Actions run, since nothing in this repo has been committed/pushed yet.
 
 ## Commands

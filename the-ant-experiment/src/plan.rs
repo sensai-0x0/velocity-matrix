@@ -312,4 +312,56 @@ mod tests {
         assert!(p.commands.is_empty());
         assert!(!p.requires.owner_credentials);
     }
+
+    // Golden-file tests (spec/phased-plan.md's P2 exit gate: "Golden-file plans correct per
+    // profile"). Each fixture under tests/fixtures/plans/ was generated from plan() itself
+    // against the fixed baseline below and then committed — these tests catch any future
+    // change to commands_for/consequences_for/plan() that silently changes what gets
+    // planned, by diffing against that frozen snapshot rather than re-deriving it inline.
+    fn assert_matches_golden_file(mode: SecurityMode, target: TargetProfile, fixture_path: &str) {
+        let baseline = baseline_with_mode(mode);
+        let planned = plan(&baseline, target).unwrap();
+        let actual = serde_json::to_value(&planned).unwrap();
+        let expected: serde_json::Value = serde_json::from_str(fixture_path).unwrap();
+        assert_eq!(
+            actual, expected,
+            "plan output no longer matches the committed golden file"
+        );
+    }
+
+    #[test]
+    fn golden_full_to_reduced_kexts() {
+        assert_matches_golden_file(
+            SecurityMode::Full,
+            TargetProfile::ReducedKexts,
+            include_str!("../tests/fixtures/plans/full_to_reduced_kexts.json"),
+        );
+    }
+
+    #[test]
+    fn golden_full_to_permissive_custom_kernel() {
+        assert_matches_golden_file(
+            SecurityMode::Full,
+            TargetProfile::PermissiveCustomKernel,
+            include_str!("../tests/fixtures/plans/full_to_permissive_custom_kernel.json"),
+        );
+    }
+
+    #[test]
+    fn golden_reduced_to_full_revert() {
+        assert_matches_golden_file(
+            SecurityMode::Reduced,
+            TargetProfile::Full,
+            include_str!("../tests/fixtures/plans/reduced_to_full_revert.json"),
+        );
+    }
+
+    #[test]
+    fn golden_permissive_to_full_revert() {
+        assert_matches_golden_file(
+            SecurityMode::Permissive,
+            TargetProfile::Full,
+            include_str!("../tests/fixtures/plans/permissive_to_full_revert.json"),
+        );
+    }
 }

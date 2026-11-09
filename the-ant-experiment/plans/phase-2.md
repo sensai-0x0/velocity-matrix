@@ -37,16 +37,23 @@ specify. In particular, double-check:
   literal placeholder, `<custom-boot-object-path>`, in `commands_for`'s
   `PermissiveCustomKernel` arm) — this needs a real value before P4 can run it for real.
 
-## 3. Golden-file tests as separate files (optional; current form is defensible)
+## 3. ~~Golden-file tests as separate files~~ — done
 
-`spec/phased-plan.md` calls for "golden-file tests fixing the command set per profile".
-What exists today is inline Rust assertions in `src/plan.rs`'s `#[cfg(test)]` module
-(`full_to_reduced_kexts_is_permitted_and_uses_bputil_flags`, etc.) rather than separate
-`.json`/`.golden` fixture files diffed against. For a planner this size (three profiles,
-short command lists), inline assertions are arguably clearer than a fixture-diffing
-harness — but if the test surface grows (more profiles, more per-generation variation),
-revisit this and extract `tests/fixtures/plans/<profile>.json` files with a small
-`assert_eq!(serde_json::to_value(&plan).unwrap(), expected_json)` harness instead.
+`tests/fixtures/plans/` now has one committed JSON fixture per transition
+(`full_to_reduced_kexts.json`, `full_to_permissive_custom_kernel.json`,
+`reduced_to_full_revert.json`, `permissive_to_full_revert.json`), generated from `plan()`
+itself and then frozen. `src/plan.rs`'s `golden_*` tests diff fresh `plan()` output against
+them via `serde_json::Value` equality. Negative-tested: editing a fixture to say `-X`
+instead of `-k` makes the corresponding test fail with a readable diff, confirming this
+actually catches drift rather than trivially passing. The original inline assertion tests
+(`full_to_reduced_kexts_is_permitted_and_uses_bputil_flags`, etc.) are kept alongside these —
+they test specific properties (which tool, which flags are present) independently of exact
+JSON shape, which is a useful second angle on the same code.
+
+If item 1 or 2 above ever changes `commands_for`/`is_permitted`, the golden fixtures need
+regenerating too — see the (now-removed) one-off generator pattern in this file's git
+history (`src/plan.rs`, commit that added these tests) for how they were produced the first
+time.
 
 ## 4. Multi-volume targets (shared with phase-1.md item 3)
 
