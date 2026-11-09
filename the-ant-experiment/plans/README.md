@@ -7,12 +7,13 @@ and what's been deliberately left as an open gap).
 
 | File | Phase | Who does it |
 |---|---|---|
-| [phase-0.md](phase-0.md) | P0 Foundations — two small gaps left | Either a coding agent or a human; no hardware/credentials needed |
-| [phase-1.md](phase-1.md) | P1 Evaluator — mostly done; optional follow-ups | Either |
-| [phase-2.md](phase-2.md) | P2 Planner — done for the current scope; what would make it stronger | Either |
+| [phase-0.md](phase-0.md) | P0 Foundations — one item done, one open (needs a human's `sudo` password) | Either |
+| [phase-1.md](phase-1.md) | P1 Evaluator — `other_containers` done; IMG4-into-collect wiring still open | Either |
+| [phase-2.md](phase-2.md) | P2 Planner — golden-file tests done; architecture-doc verification still open | Either |
 | [phase-3.md](phase-3.md) | P3 Executor + Authoriser + Verifier — **not started** | **Human with physical access to a scratch Mac** |
 | [phase-4.md](phase-4.md) | P4 Permissive path + revert + control surface — **not started** | **Human with physical access to a scratch Mac** |
 | [phase-5.md](phase-5.md) | P5 Hardening + release — **not started** | Human (needs the hardware matrix) |
+| [research-environment.md](research-environment.md) | Prep for P5's hardware-matrix coverage: simulating an M6-generation Mac from an IPSW you already have, without owning the hardware | Human (needs the IPSW file) |
 
 **Why P3 onward can't just be assigned to an agent the same way P0–P2 were:** those phases
 mutate a real Mac's boot security policy, which `spec/build-spec.md`'s golden rules require
