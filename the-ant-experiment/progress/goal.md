@@ -64,6 +64,19 @@ result, not a failure of this research track. Two live paths forward:
 Pick one and record the decision in `progress/milestones.md` rather than leaving M5
 hanging indefinitely.
 
+**Decision, 2026-11-10:** a third option, safer than either of the two above, found on
+reflection: **retry Track B, but with an IPSW for a chip generation this host *can*
+virtualize** (`tart create --from-ipsw=latest`, which fetches Apple's own
+latest-supported-for-this-host image), instead of either waiting for M6-or-newer hardware
+or moving straight to physically risky scratch hardware. This isn't M6-specific anymore —
+that's fine, because nothing in "What success looks like" above requires M6 specifically;
+the M6 angle was about identity-fixture realism (`plans/research-environment.md` Track A,
+already done), not about the mutation proof itself. This option has strictly less risk
+than real scratch hardware (fully disposable, no physical device, no DFU-restore
+exposure, owner credentials are ones created fresh for this VM) and directly re-opens the
+original SEP/LocalPolicy question M5 asked, on hardware that can actually attempt it. See
+`progress/milestones.md` for how this goes.
+
 ## How this relates to the rest of the project
 
 - `plans/phase-0.md` through `phase-2.md` (read-only evaluator and planner) are

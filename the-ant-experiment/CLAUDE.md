@@ -2,6 +2,43 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Never impact the host machine
+
+This is a different constraint from `spec/build-spec.md`'s golden rules below — those
+govern what the *tool* does to a *target* Mac it's evaluating. This one governs what
+**Claude Code itself** does to **the machine this session is running on** (the "host"),
+which is never a target device and is not covered by the tool's own safety contract at
+all.
+
+**Claude must never leave a lasting impact on the host machine while working in this
+repo.** Concretely, that means no installing packages or CLI tools (`brew install` or
+equivalent), no downloading large files, no creating VMs or other persistent artifacts
+outside this repo's own working directories, and no other host-level system changes —
+without stopping first and getting the user's explicit go-ahead for that specific action.
+Reversible, repo-scoped actions (editing files, running `cargo build`/`test`, read-only
+`csrutil`/`sysctl`/`system_profiler` reads against the host for fixture-capture purposes,
+per `tests/fixtures/README.md`) are fine; anything that changes the host's own installed
+software, disk usage at scale, or persistent state is not, by default.
+
+**Why this is here:** the simulated-research track (`progress/goal.md`,
+`plans/research-environment.md`) already did exactly what this rule now forbids before it
+existed — installed `blacktop/ipsw` and `tart` via Homebrew (and, when the `tart` formula
+turned out to be broken, pulled and placed its binary manually), and downloaded two
+separate macOS restore images (~20.8 GB and ~15 GB) directly onto the host's disk. None of
+that was malicious or reckless in the moment — it was in service of a legitimate research
+goal — but it's exactly the kind of host-level footprint this rule exists to require a
+stop-and-ask for, and it hasn't been cleaned up or confirmed with the user. If you're
+picking this repo back up: that's still outstanding. Ask the user whether to keep or
+remove `blacktop/ipsw`, `~/Applications/tart.app`, the `tart` symlink, and the cached
+restore images under `~/.tart/cache/` before assuming it's fine to leave them.
+
+**What to do instead** when research genuinely needs an isolated environment (a VM, a
+scratch container, a second machine): that environment is the thing you act on, never the
+host itself beyond the one-time, confirmed setup step of creating it. Prefer remote or
+disposable targets reachable from the host over anything installed on the host directly,
+and when a host-level install is genuinely unavoidable, say so and ask before running it
+rather than treating it as implied by the broader task.
+
 ## Repository status
 
 **P0 and P1 are implemented and green; P2 (planner) is implemented; P3–P5 are not started and are out of scope for autonomous work in this repo** — see "Delivery sequence" below for why. The three documents in `spec/` remain the complete authority for what to build and how; read all three before changing anything. `spec/build-spec.md` and `spec/contract-spec.md` both reference a "companion architecture and implementation plan" (its sections 9–10) that is **not present in this repo** — several implementation choices below (the 1TR-detection mechanism, the state-machine edges, the exact `bputil`/`kmutil` command flags) had to be filled in without it. Each such choice is flagged with a doc comment in the code pointing back here; treat them as provisional, not as the architecture document's authority, and revisit them if that document ever surfaces.
