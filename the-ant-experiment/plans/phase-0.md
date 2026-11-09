@@ -2,11 +2,10 @@
 
 Status: CI, the audited wrapper, and the fixtures harness are implemented and passing
 (`cargo test`, `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`,
-`./scripts/ci_guards.sh`). Two items from the P0 exit gate in `spec/phased-plan.md` are not
-yet closed out. Neither needs hardware or a human owner — both are doable by an agent or a
-developer at a desk.
+`./scripts/ci_guards.sh`). Item 1 below is now done. Item 2 needs a human and is not
+something an agent can complete unattended — it's left open on purpose, not forgotten.
 
-## 1. Prove the IMG4 parser against a real manifest, not just malformed input
+## 1. ~~Prove the IMG4 parser against a real manifest, not just malformed input~~ — done
 
 `src/state/img4.rs` currently only has negative tests (garbage bytes rejected). The P0
 "IMG4 parser spike" workstream calls for proving the parser against a real manifest.
@@ -41,9 +40,14 @@ Steps:
 4. Update `src/state/img4.rs`'s module doc comment and `CLAUDE.md`'s "Deviations" entry for
    this item — the "not yet proven against a real manifest" caveat goes away.
 
-This closes the gap without touching anything hardware- or credential-related.
+Done: `tests/fixtures/image4_apticket.der` is vendored, `src/state/img4.rs` has
+`parses_a_real_signed_manifest` passing against it, and `tests/fixtures/README.md`/
+`CLAUDE.md` are updated. The `#[allow(dead_code)]` markers are now `cfg_attr(not(test),
+allow(dead_code))` rather than removed outright — `parse_manifest_der`/`facts` are
+genuinely exercised only by tests until `plans/phase-1.md` item 1's wiring into
+`state::collect` lands, so a plain `cargo build` still can't reach them.
 
-## 2. Capture a real `bputil -d` fixture (needs a human, but not an owner-credential one)
+## 2. Capture a real `bputil -d` fixture (needs a human, but not an owner-credential one) — open
 
 `bputil -d` requires root. `sudo -n bputil -d` (what `state/collect.rs` calls) will always
 fail without a cached `sudo` session, which is correct and intentional — but it means there

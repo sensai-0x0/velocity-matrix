@@ -9,11 +9,16 @@
 //! decodes structure and exposes the raw signature/cert-chain bytes; it never asserts they
 //! are valid.
 //!
-//! Spike status: `parse_manifest_der` is proven against malformed input (negative tests,
-//! below) and compiles against the crate's real `Decode` API. It is **not yet** proven
-//! against a real public IPSW manifest, because doing so means downloading a multi-GB
-//! firmware image to extract its `im4m` — out of scope for this change. That remains an open
-//! item before this module's P0 exit gate is fully met; track it rather than claim it done.
+//! Spike status: `parse_manifest_der` is proven against both malformed input (negative
+//! tests) and a real signed IM4M manifest (`tests/fixtures/image4_apticket.der`, vendored
+//! from the `image4` crate's own test suite under its `MIT OR Apache-2.0` license — see
+//! `tests/fixtures/README.md`). It is still not proven against a manifest pulled from a
+//! real public IPSW specifically; that distinction matters less than it first appears,
+//! since this module only decodes DER structure and never verifies a signature either way
+//! (see "must not" above) — a real signed manifest from any source exercises the same
+//! decode path. Not yet wired into `state::collect` — see `plans/phase-1.md` item 1 for why
+//! (it needs either `bputil -d -j`'s own exposure of this data, or a confirmed on-disk
+//! manifest path, neither of which is available without a human at the device).
 
 use der::Decode;
 use image4::manifest::Manifest;
@@ -21,8 +26,6 @@ use image4::manifest::Manifest;
 #[derive(Debug, thiserror::Error)]
 pub enum Img4Error {
     #[error("manifest DER could not be decoded: {0}")]
-    #[allow(dead_code)]
-    // constructed by parse_manifest_der, not yet called from collect — see module doc
     Decode(String),
     #[error("manifest body could not be decoded as a property dictionary: {0}")]
     BodyDecode(String),
@@ -33,28 +36,24 @@ pub enum Img4Error {
 /// of it. Never attempts to verify the signature — that is explicitly out of scope for this
 /// module (`spec/build-spec.md`, state/img4 "must not").
 ///
-/// Not yet called from `state::collect` (see module doc) — exercised by this module's own
-/// tests only until a real captured manifest is available to parse in P1.
-#[allow(dead_code)]
+/// Exercised by this module's own tests against both malformed input and a real manifest
+/// (see module doc); not yet called from `state::collect`'s production path (hence
+/// `cfg_attr(not(test), allow(dead_code))` below rather than deleting it — see
+/// `plans/phase-1.md` item 1 for what's blocking that wiring).
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn parse_manifest_der(bytes: &[u8]) -> Result<Manifest, Img4Error> {
     Manifest::from_der(bytes).map_err(|e| Img4Error::Decode(e.to_string()))
 }
 
 /// Raw signature bytes and DER-encoded cert chain, exposed for the evidence bundle. The tool
 /// records these; it does not evaluate them as proof of anything on its own.
-///
-/// Not yet called from `state::collect` — folding manifest hashes/signers into
-/// `BootState.enrolled_objects` needs a real captured manifest to test against, which this
-/// pass doesn't have (see this module's doc comment). Kept rather than deleted so the P1
-/// workstream ("fold manifest hashes and signers into enrolled_objects",
-/// `spec/phased-plan.md`) has a proven-to-compile starting point.
-#[allow(dead_code)]
+#[cfg_attr(not(test), allow(dead_code))]
 pub struct ManifestFacts {
     pub signature: Vec<u8>,
     pub property_count: usize,
 }
 
-#[allow(dead_code)]
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn facts(manifest: &Manifest) -> Result<ManifestFacts, Img4Error> {
     let body = manifest
         .decode_body()
@@ -81,7 +80,12 @@ mod tests {
         assert!(result.is_err());
     }
 
-    // No positive test against a real captured IM4M manifest yet — see module doc. When one
-    // is added (per-generation fixtures land in P5, but a single sample could land earlier
-    // for this spike), assert `facts()` returns a non-empty signature and property_count > 0.
+    #[test]
+    fn parses_a_real_signed_manifest() {
+        let der = include_bytes!("../../tests/fixtures/image4_apticket.der");
+        let manifest = parse_manifest_der(der).expect("real manifest should parse");
+        let facts = facts(&manifest).expect("body should decode");
+        assert!(!facts.signature.is_empty());
+        assert!(facts.property_count > 0);
+    }
 }
