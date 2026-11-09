@@ -36,18 +36,33 @@ This phrase is doing a lot of work and is easy to misread, so pin it down precis
 
 ## The open technical question this goal depends on
 
-`plans/research-environment.md` already surfaced community reports that Apple's
+`plans/research-environment.md` originally surfaced community reports that Apple's
 Virtualization.framework may not fully emulate the Secure Enclave / LocalPolicy machinery
 `bputil` depends on — one forum report describes `bputil -d` failing inside a VZ guest
-with an SEP-communication error ("Failed to create local policy"). That's a secondhand
-report, not something this project has confirmed or refuted yet.
+with an SEP-communication error ("Failed to create local policy").
 
-**This goal does not assume the answer.** It is entirely possible that the honest
-end-state of this work is "a macOS VM cannot be used to prove `bputil`'s mutation path
-works, only its read-only/display behavior" — in which case the milestone is to confirm
-that clearly, in writing, with evidence, and then the path to a real "unlocked" proof goes
-through `plans/phase-3.md`'s scratch-hardware route instead. That outcome is a legitimate,
-useful result of this research track, not a failure of it.
+**Update, 2026-11-10 (M4 attempted):** that specific question is now moot on the hardware
+available to this project, for a more basic reason, confirmed first-hand:
+`tart create --from-ipsw=<the real M6 IPSW>` fails outright with
+`UnsupportedRestoreImageError()` on this session's host (an Apple M2 Pro). Per Apple's own
+`VZMacOSRestoreImage` documentation, the configuration tart needs comes back `nil` when
+"none of the hardware models are supported on the current host" — and this IPSW's only
+two build identities are both M6-generation. The VM can't even be *created*, let alone
+boot far enough to test SEP/`bputil` behavior inside it. See
+`plans/research-environment.md`'s "Results from Track B" for the full account.
+
+**This goal still does not assume an answer, it just has a sharper question now.** The
+honest end-state so far is "a macOS VM for a chip generation newer than the host's own
+can't be built on this hardware at all" — which is a legitimate, useful, *confirmed*
+result, not a failure of this research track. Two live paths forward:
+1. Retry Track B on a host whose own chip is M6 (or newer) — if one becomes available,
+   the original SEP/LocalPolicy question is still open and worth testing then.
+2. Treat this as resolved for now and pursue the "unlocked" proof via
+   `plans/phase-3.md`'s real-scratch-hardware route instead — which was always the
+   fallback this goal anticipated.
+
+Pick one and record the decision in `progress/milestones.md` rather than leaving M5
+hanging indefinitely.
 
 ## How this relates to the rest of the project
 

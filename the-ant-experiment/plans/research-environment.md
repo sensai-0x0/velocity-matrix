@@ -114,13 +114,17 @@ guessed.
 
 ## 3. Track B — a real macOS VM, for OS-version tool *behavior* only
 
-Optional, and scoped narrowly: use this only to see how `bputil --help`, `csrutil status`
-wording, etc. look on the *actual macOS build* M6 ships with — not to get M6's identity
-strings (see §1) and not to assert any real security state.
+**Attempted and blocked — see "Results," below, for the confirmed reason before trying
+this again.** Originally scoped narrowly: use this only to see how `bputil --help`,
+`csrutil status` wording, etc. look on the *actual macOS build* M6 ships with — not to get
+M6's identity strings (see §1) and not to assert any real security state.
 
-Tooling: [`tart`](https://github.com/cirruslabs/tart) (`brew install
-cirruslabs/cli/tart`) — confirmed to support building a macOS VM directly from a local IPSW
-file, no Xcode/Swift Virtualization.framework code needed:
+Tooling: [`tart`](https://github.com/cirruslabs/tart) (the Homebrew formula
+`cirruslabs/cli/tart` was broken against this Homebrew version at the time this was run —
+see "Results" — the release tarball from GitHub worked once extracted and kept as an
+intact `.app` bundle rather than copying out the raw binary, which trips Gatekeeper/AMFI)
+— confirmed to support building a macOS VM directly from a local IPSW file, no
+Xcode/Swift Virtualization.framework code needed:
 
 ```bash
 tart create --from-ipsw=/path/to/your.ipsw m6-research-vm
@@ -239,9 +243,51 @@ guesses, though in every case where this doc had guessed, the file confirmed it.
 - Output artifacts (BuildManifest.json, device tree JSON/summary, extracted im4p/
   kernelcache files, `ipsw info` dumps) are under `research/` in this repo, which is now
   `.gitignore`'d (added alongside `*.ipsw` — a 20.8 GB restore image and a 125 MB
-  kernelcache binary have no business in git history). Nothing from this run is committed
-  yet; building the actual `tests/fixtures/` entries §4 describes (now with real values
-  instead of placeholders) is the natural next step, not yet done.
+  kernelcache binary have no business in git history). The `tests/fixtures/` entries §4
+  describes were built from these real values (not placeholders) in a follow-up commit —
+  see `tests/fixtures/README.md`'s `_FIRMWARE_TEMPLATE` section and `progress/milestones.md`.
+
+## Results from Track B: the VM — blocked, and why
+
+Attempted on 2026-11-10, same session as the Track A results above. Tool: `tart` v2.41.1
+(the `cirruslabs/cli/tart` Homebrew formula was broken against this Homebrew version at
+install time — `depends_on :macos` DSL error in the tap itself, not this project's doing —
+so the binary was pulled directly from the project's GitHub release instead:
+`gh release download 2.41.1 --repo cirruslabs/tart --pattern tart.tar.gz`, extracted, and
+kept as an intact `.app` bundle rather than copying the raw Mach-O out — copying just the
+binary trips Gatekeeper/AMFI and the process gets killed (exit 137); running it from
+inside the bundle works, since its signature is notarized and tied to that bundle shape).
+
+```
+$ tart create m6-research-vm --from-ipsw=UniversalMac_27.2_26B7124_Restore.ipsw --disk-format asif
+Error: UnsupportedRestoreImageError()
+```
+
+No partial VM was created (`tart list` confirms this — the error fires before any disk
+allocation).
+
+**Why, grounded in Apple's own documentation, not guessed:** `VZMacOSRestoreImage` can
+contain installation media for multiple Mac hardware models, and Apple's docs state
+plainly that its `mostFeaturefulSupportedConfiguration` property — the configuration tart
+needs to proceed — is `nil` "if none of the hardware models are supported on the current
+host." This IPSW's two `BuildIdentities` are both M6-generation (`Mac18,1`/`Mac18,2`,
+`t8152`). **The host machine in this session is an Apple M2 Pro.** The strong inference —
+backed by Apple's documented API behavior, though no error-string-exact source was found —
+is that Virtualization.framework does not let a host create a VM targeting a *newer* SoC
+generation's hardware model than the host's own silicon, independent of which macOS
+*version* is involved. This is a different, and earlier, blocker than the one
+`plans/research-environment.md`'s original §1 cited (SEP/LocalPolicy failing *inside* a
+VZ guest) — that question is now moot for this host, because the VM can't be created at
+all, for a more basic reason than SEP.
+
+**What this means for `progress/goal.md`'s open question:** it isn't answered yet, just
+blocked by a more fundamental constraint on this specific host. To actually test Track B
+on this hardware, the IPSW would need to be for a chip generation at or older than the
+host's own (M2 Pro or earlier) — which defeats the point of using it for M6-specific
+research. The real path forward for Track B is **a host machine whose own chip is M6 or
+newer**; absent that, this research track's honest conclusion is to pivot to
+`plans/phase-3.md`'s real-scratch-hardware route for proving an actual security-mode
+transition, same as `goal.md` already anticipated as a legitimate outcome.
 
 ## Sources
 
@@ -253,3 +299,4 @@ guesses, though in every case where this doc had guessed, the file confirmed it.
 - [khronokernel — Apple Silicon and Virtual Machines: Custom Serials, DEP Enrolment and the Secure Enclave](https://khronokernel.com/macos/2023/08/18/AS-VM-SERIAL.html)
 - [Apple Developer Forums — "Entering 1TR with Virtualization.framework?"](https://developer.apple.com/forums/thread/699102) (SEP/LocalPolicy failure report in VZ guests)
 - [cirruslabs/tart — `--from-ipsw` VM creation](https://github.com/cirruslabs/tart)
+- [Apple Developer Docs — `VZMacOSRestoreImage.mostFeaturefulSupportedConfiguration`](https://developer.apple.com/documentation/virtualization/vzmacosrestoreimage.md) (nil "if none of the hardware models are supported on the current host" — the basis for this document's inferred cause of `UnsupportedRestoreImageError`)
