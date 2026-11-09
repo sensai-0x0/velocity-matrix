@@ -26,3 +26,8 @@ to an agent with you present at the keyboard).
 Read `../CLAUDE.md`'s "Deviations from the literal spec text" section before starting any
 phase below — several of the gaps listed there (the missing companion architecture document,
 specifically) are preconditions worth resolving before P3 rather than after.
+
+`research-environment.md` has its own tracking in `../progress/`: `goal.md` states
+precisely what "simulating the environment and verifying the bootloader is unlocked"
+means (and, as importantly, what it doesn't), and `milestones.md` is the living record of
+progress toward it — update that log, not just this table, when you work on it.

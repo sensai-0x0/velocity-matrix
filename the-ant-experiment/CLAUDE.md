@@ -8,6 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Commands and architecture below describe what's actually built, not a plan.
 
+There's also a simulated-research track running alongside the phased plan:
+`progress/goal.md` states its goal precisely (don't skip the "what 'unlocked' means here"
+section before touching it) and `progress/milestones.md` is the living record of where it
+stands — check both before claiming anything about the virtual/simulated environment work
+is done, and update `milestones.md`'s log when you make progress on it.
+
 ## What bputil-eval is
 
 A single statically-linked Rust binary (Swift acceptable if justified) with two halves:
