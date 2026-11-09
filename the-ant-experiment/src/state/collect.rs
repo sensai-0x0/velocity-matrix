@@ -247,6 +247,17 @@ mod tests {
     }
 
     #[test]
+    fn parses_m6_firmware_template_system_profiler_fixture() {
+        // Same line format, a second (M6-generation) chip — from
+        // plans/research-environment.md's real IPSW research, not a live device (no M6
+        // Mac exists to have run system_profiler on; see the fixture's own filename and
+        // tests/fixtures/README.md for what "_FIRMWARE_TEMPLATE" means).
+        let fixture =
+            include_str!("../../tests/fixtures/system_profiler_hardware_M6_FIRMWARE_TEMPLATE.txt");
+        assert_eq!(extract_serial_masked(fixture), Some("ARE>".to_string()));
+    }
+
+    #[test]
     fn parses_real_diskutil_fixture() {
         let fixture = include_str!("../../tests/fixtures/diskutil_info_root_REDACTED.txt");
         assert_eq!(

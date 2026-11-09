@@ -1,9 +1,10 @@
 # Research environment — simulating an M6-generation Mac from an IPSW
 
-Research only; nothing in this file was executed against your actual IPSW (I don't have
-it — you said you do). This is a verified plan for you or a future agent to run, in the
-same spirit as `phase-3.md` through `phase-5.md`: concrete commands, grounded in real
-documentation and real public device data, not invented syntax.
+Track A below has now actually been run, against the real file
+`UniversalMac_27.2_26B7124_Restore.ipsw` (20.8 GB) in this repo's root — see "Results from
+the real IPSW" at the end of this file for what came back. The rest of this document is
+the plan as originally written (kept intact rather than rewritten after the fact, so you
+can see what was predicted vs. confirmed); Track B (the VM) has not been run.
 
 ## 0. First finding: check what your IPSW actually is before anything else
 
@@ -17,6 +18,9 @@ says it may not exist as a distinct chip:
 - TheAppleWiki identifies that machine as **`Mac18,1`**, board **`J804AP`**, model
   **`A3536`**.
 - No M6 Pro/Max board ID or chip ID turned up in this research anywhere public.
+- **Confirmed directly from the real IPSW** (not secondhand reporting): it supports
+  exactly two devices, both plain M6, no Pro/Max — see the results section. The "M6 Pro"
+  naming concern in this section was correct.
 
 So "Mac M6 Pro" most likely means **"the M6-chip MacBook Pro" (`Mac18,1`)** — i.e. the
 *laptop line* is "Pro," not the *chip tier*. But don't take my word for it: **your IPSW's
@@ -167,6 +171,77 @@ provenance table and its `_REDACTED`/`_SYNTHETIC` naming precedent
   guests) or an owner-present 1TR flow, so it doesn't shortcut P3/P4's hardware
   requirement. Don't treat a successful VM boot as license to start P3 without real
   hardware.
+
+## Results from the real IPSW
+
+Ran against `UniversalMac_27.2_26B7124_Restore.ipsw` on 2026-11-10. Tool:
+`blacktop/ipsw` v3.1.743 (installed via `brew install blacktop/tap/ipsw` for this). Every
+value below is read directly out of the file — none of it is this document's earlier
+guesses, though in every case where this doc had guessed, the file confirmed it.
+
+**`ipsw info -j`:**
+```json
+{"type":"IPSW","version":"27.2","build":"26B7124","os":"Production","devices":[
+  {"name":"MacBook Pro (14-inch, M6)","product":"Mac18,1","board":"J804AP",
+   "cpu":"CPU: M6 (ARMv9.5-A), ID: t8152"},
+  {"name":"iMac (24-inch, M6)","product":"Mac18,2","board":"J833ctAP",
+   "cpu":"CPU: M6 (ARMv9.5-A), ID: t8152"}
+]}
+```
+
+- **§0's naming concern was correct, confirmed first-hand, not just from secondary
+  reporting.** This Universal Mac restore image supports exactly two devices, both the
+  plain M6 chip (`t8152`, `ARMv9.5-A`) — no Pro/Max tier. The OS itself is already at
+  **macOS 27.2** (not "Tahoe 26.x" as this document's earlier research round assumed —
+  that research was working from cached/pre-release-era pages; the real file is the
+  authoritative source here, exactly per §0's own advice to check it rather than trust
+  secondhand naming).
+- `BuildManifest.plist` (extracted via `unzip -p ... BuildManifest.plist`, converted via
+  `ipsw plist ... | jq`) confirms `ProductVersion: 27.2`, `ProductBuildVersion: 26B7124`,
+  `SupportedProductTypes: ["Mac18,1", "Mac18,2"]`, `DeviceClass` lowercase (`j804ap`,
+  `j833ctap` — same boards, TheAppleWiki's casing was just cosmetically different), and
+  firmware paths like `Firmware/all_flash/iBoot.j804.RELEASE.im4p` and
+  `kernelcache.release.mac18g`.
+- `ipsw dtree --filter j804ap --summary` against the IPSW directly (no need to manually
+  extract+decode the IM4P first — the subcommand handles that) gives:
+  ```
+  Model: Mac18,1   Board Config: J804AP   Product Name: MacBook Pro (14-inch, M6)
+  SoC Name: Apple M6 (t8152)
+  ```
+  **This confirms §4's table entry that labeled `"Apple M6"` as merely "pattern-inferred."
+  It's not a guess anymore — it's the device tree's own `SoC Name`, which is exactly what
+  feeds `sysctl -n machdep.cpu.brand_string` on real hardware.** Downgrade that fixture's
+  label from `_PATTERN_INFERRED` to a plain, confirmed value if you build it.
+- The device tree's other identity-shaped fields (`mlb-serial-number`,
+  `model-number`, `region-info`, `regulatory-model-number`, `config-number`) are all
+  literal firmware placeholders — e.g. `"mlb-serial-number": "syscfg/MLB#/0x20,zeroes/0x20"`
+  — not real device data. Nothing sensitive to redact here; this is Apple's own generic
+  template, confirmed by inspecting the values before using them anywhere.
+- `iBoot.j804.RELEASE.im4p` (extracted via `ipsw extract --iboot`), inspected with `ipsw
+  img4 im4p info`: `Type: ibot`, `Version: mBoot-20457.41.3`, LZFSE-compressed, 4.4 MB
+  uncompressed. `LLB.j804.RELEASE.im4p`'s manifest entry (from `BuildManifest.plist`
+  directly, not re-extracted) gives `BuildString: iBoot-15391~1595`.
+- `ipsw extract --kernel` produced a genuine 125 MB Mach-O 64-bit arm64 kernelcache
+  (`file` confirms the type) — real binary, decrypted/decompressed by the tool, useful
+  stock for `phase-5.md`'s eventual fuzzing corpus.
+- **Confirmed limitation, not a tool failure:** `ipsw device-info --prod Mac18,1` (the
+  cross-reference lookup §2 planned to use) returned `{}` — the installed tool's bundled
+  device database predates M6's launch and hasn't been updated with `Mac18,1`/`Mac18,2`
+  yet. The same lookup works fine for older devices (tested against `Mac15,11`). Track A's
+  other commands don't depend on this database at all, so this doesn't block anything —
+  it's just one cross-check that isn't available yet for this generation.
+- **Confirmed, not assumed:** fed the real `iBoot.j804.RELEASE.im4p` into this project's
+  own `state::img4::parse_manifest_der` (a one-off local test, not committed — the
+  function expects `IM4M`, not `IM4P`, different ASN.1 schemas). It correctly returned
+  `Err(Decode(...))` rather than silently misparsing it — the fail-closed behaviour
+  `spec/build-spec.md` requires held up against a real, unexpected input type, not just
+  the garbage-bytes test already in the suite.
+- Output artifacts (BuildManifest.json, device tree JSON/summary, extracted im4p/
+  kernelcache files, `ipsw info` dumps) are under `research/` in this repo, which is now
+  `.gitignore`'d (added alongside `*.ipsw` — a 20.8 GB restore image and a 125 MB
+  kernelcache binary have no business in git history). Nothing from this run is committed
+  yet; building the actual `tests/fixtures/` entries §4 describes (now with real values
+  instead of placeholders) is the natural next step, not yet done.
 
 ## Sources
 

@@ -19,6 +19,10 @@ output into `tests/fixtures` for deterministic parser tests").
 | `image4_apticket.der` | vendored, not captured — see below | n/a | n/a |
 | `diskutil_apfs_listVolumeGroups_REDACTED.txt` | `diskutil apfs listVolumeGroups` | Apple M2 Pro | 25D125 |
 | `diskutil_apfs_listVolumeGroups_SYNTHETIC_multi.txt` | hand-built, not captured — see below | n/a | n/a |
+| `sysctl_machdep_cpu_brand_string_M6.txt` | real IPSW's device tree `SoC Name` field, not `sysctl` — see "`_FIRMWARE_TEMPLATE` fixtures" below | Apple M6 (`Mac18,1`) | 26B7124 |
+| `sw_vers_buildVersion_M6.txt` | real IPSW's `BuildManifest.plist` `ProductBuildVersion` | Apple M6 (`Mac18,1`) | 26B7124 |
+| `system_profiler_hardware_M6_FIRMWARE_TEMPLATE.txt` | assembled from real IPSW data — see below | Apple M6 (`Mac18,1`) | 26B7124 |
+| `ioreg_platform_expert_device_M6_FIRMWARE_TEMPLATE.txt` | real IPSW's device tree, converted to ioreg's text shape — see below | Apple M6 (`Mac18,1`) | 26B7124 |
 
 `image4_apticket.der` is a real, signed IM4M manifest, copied verbatim from the `image4`
 crate's own test suite (`tests/data/apticket.der` in `image4` v0.8.2, `MIT OR Apache-2.0`
@@ -40,6 +44,33 @@ All of the remaining text fixtures above were captured from macOS (not 1TR) — 
 can run without elevation. All are read-only and change nothing on the host they were captured
 from (golden rule 3).
 
+## `_FIRMWARE_TEMPLATE` fixtures
+
+A third label, alongside `_REDACTED` (a real device capture with PII removed) and
+`_SYNTHETIC` (hand-built, no real source at all): `_FIRMWARE_TEMPLATE` means the values are
+real, but extracted from Apple's own unpersonalized firmware — not run on, or captured
+from, a live booted device, because no such M6 device was available (see
+`plans/research-environment.md` for the full research). Concretely, these four were built
+from `UniversalMac_27.2_26B7124_Restore.ipsw`'s `BuildManifest.plist` and device tree
+(`ipsw plist`, `ipsw dtree --json`, both from `blacktop/ipsw`):
+
+- `sysctl_machdep_cpu_brand_string_M6.txt` and `sw_vers_buildVersion_M6.txt` carry **no**
+  `_FIRMWARE_TEMPLATE` suffix even though they came from the same research, because their
+  values are exact, unambiguous facts (the device tree's `SoC Name` is literally what
+  `sysctl -n machdep.cpu.brand_string` reports on real hardware of that generation; the
+  build version is literally `BuildManifest.plist`'s `ProductBuildVersion`) — there's
+  nothing templated or placeholder about them.
+- `system_profiler_hardware_M6_FIRMWARE_TEMPLATE.txt` and
+  `ioreg_platform_expert_device_M6_FIRMWARE_TEMPLATE.txt` **do** carry the suffix: their
+  identity-shaped fields (serial, model/config/region numbers) are Apple's own generic
+  `syscfg/...,zeroes/...` placeholders from the firmware template, not real per-device
+  values — there is no real M6 serial number to redact, because no real M6 device backed
+  this. The `system_profiler` fixture is deliberately partial (only `Model Name`, `Model
+  Identifier`, `Chip`, and a placeholder serial line) rather than guessing fields this
+  research didn't actually confirm (firmware version, core count, memory size, etc.) — see
+  `plans/research-environment.md`'s "Results from the real IPSW" section for exactly what
+  was and wasn't confirmed.
+
 ## What's missing
 
 `bputil -d` (and `-d -j`), i.e. the actual local-policy display, **requires root**
@@ -53,9 +84,11 @@ action, and the tool must never automate, store, or prompt for that credential
 generation in the hardware matrix (`spec/phased-plan.md`'s P5 "Coverage across the hardware
 matrix"), and add it here — redacted the same way the files below are.
 
-Per-chip-generation coverage (M1–M5 per `spec/phased-plan.md`'s hardware test matrix) is a
-P5 concern; this repo currently only has fixtures from the one Apple Silicon Mac available
-during initial development.
+Per-chip-generation coverage (per `spec/phased-plan.md`'s hardware test matrix) is a P5
+concern; this repo has real-hardware fixtures from the one Apple Silicon Mac available
+during initial development (M2 Pro), plus `_FIRMWARE_TEMPLATE` identity fixtures for M6
+derived from a real IPSW rather than real hardware (see above) — genuine M6 hardware
+fixtures, especially a real `bputil -d` capture, are still an open item.
 
 ## Why `system_profiler`, not `ioreg`, for the serial number
 
